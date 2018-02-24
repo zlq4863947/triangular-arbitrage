@@ -12,3 +12,6 @@
 npm install
 npm start
 ```
+
+
+<p align="center"><img src="assets/index.png"></p>
