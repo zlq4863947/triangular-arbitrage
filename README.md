@@ -10,6 +10,5 @@
 
 ```js
 npm install
-npm run prepare
 npm start
 ```
