@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>PubSub</title>
+</head>
+
+<body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
+  <script src="/pubsub.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+  <div class="container" ng-app="pubSub" ng-controller="pubSubController">
+    <div class="row">
+      <div style="text-align: center; margin-top: 20px">
+        <h3>三角套利</h3>
+      </div>
+    </div>
+    <div class="row">
+      <table class="eleven columns table">
+        <thead>
+          <tr>
+            <th>Step A</th>
+            <th>Step B</th>
+            <th>Step C</th>
+            <th>Rate</th>
+            <th>BnB手续费</th>
+            <th>(Rate - BnB手续费)</th>
+            <th>正常手续费</th>
+            <th>(Rate - 手续费)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="(index,ticker) in tickers">
+            <td>{{ticker.a.key}}</td>
+            <td>{{ticker.b.stepFrom}}</td>
+            <td>{{ticker.c.stepFrom}}</td>
+            <td style="font: caption;">{{ticker.n_rate.toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{ticker.n_fees1.toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{ticker.n_fRate1.toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{ticker.n_fees2.toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{ticker.n_fRate2.toFixed(3).toString() + '%'}}</td>
+          </tr>
+        </tbody>
+    </div>
+  </div>
+</body>
+
+</html>

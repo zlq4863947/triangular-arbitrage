@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2016",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "types": [
+      "node",
+      "mocha"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "outDir": "./dist",
+    "declaration": true,
+    "experimentalDecorators": true
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
