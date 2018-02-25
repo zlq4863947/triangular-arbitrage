@@ -3,8 +3,10 @@ import { Database } from './database';
 import { Bot } from './bot';
 import { UI } from './ui';
 import { Event } from './event';
+import { CurrencyCore } from './currency-core';
 import * as assert from 'power-assert';
 import { EventEmitter } from 'events';
+import { IBotOptions, ICtrl, IStreams } from './type';
 
 const config = require('config');
 
@@ -33,8 +35,8 @@ export class TriangularArbitrage {
 
       const api = require('binance');
       exchangeAPI = new api.BinanceRest({
-        key: config.binance_key,
-        secret: config.binance_secret,
+        key: config.binance.apiKey,
+        secret: config.binance.secret,
         timeout: parseInt(config.restTimeout), // 可选，默认为15000，请求超时为毫秒
         recvWindow: parseInt(config.restRecvWindow), // 可选，默认为5000，如果您收到时间戳错误，则增加
         disableBeautification: !config.restBeautify,
@@ -42,7 +44,7 @@ export class TriangularArbitrage {
       exchangeAPI.WS = new api.BinanceWS();
     }
 
-    const botOptions = {
+    const botOptions: IBotOptions = {
       socket: this.socket,
       UI: {
         title: '最有潜力的三角套利，通过: ' + config.binanceColumns,
@@ -63,7 +65,7 @@ export class TriangularArbitrage {
       },
     };
 
-    const ctrl = {
+    const ctrl: ICtrl = {
       options: botOptions,
       storage: {
         db: <any>{},
@@ -74,30 +76,32 @@ export class TriangularArbitrage {
           active: [],
         },
         candidates: [],
-        streams: [],
+        streams: <IStreams>{},
         pairRanks: [],
+        streamTick: <any>{}
       },
       logger: logger,
       exchange: exchangeAPI,
       UI: <UI>{},
       events: <Event>{},
+      currencyCore: <CurrencyCore>{}
     };
 
     // 加载数据库，然后启动DB并连接后启动数据流
     try {
-      const database = new Database();
+      /*const database = new Database();
       const mongo = await database.startup(logger);
 
       if (config.useMongo) {
         ctrl.storage.db = mongo;
         ctrl.options.storage.logHistory = true;
-      }
+      }*/
       ctrl.UI = new UI(ctrl.options);
       ctrl.events = new Event(ctrl);
 
       // 我们已经准备好开始了。加载webhook流, 开始下红包雨。
       const bot = new Bot(ctrl);
-      bot.start();
+      await bot.start();
 
       ctrl.logger.info('----- 机器人启动完成 -----');
     } catch (err) {

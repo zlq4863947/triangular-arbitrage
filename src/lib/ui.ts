@@ -28,8 +28,8 @@ export class UI {
 
         ticker.n_fees2 = ticker.n_rate * 0.1; //other
         ticker.n_fRate2 = ticker.n_rate - ticker.n_fees2;
+        updTickers.push(ticker);
       }
-      updTickers.push(ticker);
     }
 
     if (updTickers.length > 0) {

@@ -1,12 +1,14 @@
 import { CurrencySelector } from './currency-selector';
+import { IStreams, IStream, Binance24HrTicker, ICurrency, IArbitrage } from './type';
 
 export class CurrencyCore {
   currencies: any;
   sockets: any;
-  streams: any;
+  streams: IStreams;
   controller: any;
   selectors: any;
   steps: string[];
+  exchangeInfo: any;
 
   constructor(ctrl: any) {
     if (!ctrl.exchange) {
@@ -14,17 +16,34 @@ export class CurrencyCore {
     }
 
     // Stores
-    (this.currencies = {}),
-      (this.sockets = {}),
-      (this.streams = {}),
-      (this.controller = ctrl),
-      (this.steps = ['BTC', 'ETH', 'BNB', 'USDT']);
+    this.currencies = {};
+    this.sockets = {};
+    this.streams = {};
+    this.controller = ctrl;
+    this.steps = ['BTC', 'ETH', 'BNB', 'USDT'];
   }
 
-  start() {
+  async start() {
     //CurrencyCore.startWSockets(exchange, ctrl);
+    this.exchangeInfo = await this.controller.exchange.exchangeInfo();
     this.startAllTickerStream(this.controller.exchange);
     this.queueTicker(5000);
+  }
+
+  getDecimalsNum(pair: string) {
+    const symbol = this.exchangeInfo.symbols.find((o: any) => o.symbol === pair);
+    if (symbol) {
+
+      const sizeFilter = symbol.filters.find((o: any) => o.filterType === 'LOT_SIZE');
+      if (sizeFilter) {
+
+        const arr = (+sizeFilter.minQty).toString().split('.');
+        if (arr.length > 1) {
+          return arr[1].length;
+        }
+      }
+    }
+    return 0;
   }
 
   queueTicker(interval: number) {
@@ -36,31 +55,31 @@ export class CurrencyCore {
     that.tick();
   }
 
-  tick() {}
+  tick() { }
 
-  getCurrencyFromStream(stream: any, fromCur: string, toCur: string) {
+  getCurrencyFromStream(stream: IStream, fromCur: string, toCur: string) {
     if (!stream || !fromCur || !toCur) return;
 
     /*
      Binance使用xxxBTC表示法。 如果我们正在考虑xxxBTC，并且我们希望从BTC到xxx，那意味着我们正在购买，反之亦然。
     */
-    var currency = stream.obj[toCur + fromCur];
-    if (currency) {
+    let currency: ICurrency = Object.assign(<ICurrency>{}, stream.obj[toCur + fromCur]);
+    if (currency && Object.keys(currency).length > 0) {
       // found a match using reversed binance syntax,
       // meaning we're buying if we're going from->to (btc->xxx in xxxBTC ticker)
       // using a fromCurtoCur ticker.
       currency.flipped = false;
-      currency.rate = currency.a;
+      currency.rate = +currency.a;
 
       // BNBBTC
       // ask == trying to buy
     } else {
-      currency = stream.obj[fromCur + toCur];
-      if (!currency) {
-        return false;
+      currency = Object.assign(<ICurrency>{}, stream.obj[fromCur + toCur]);
+      if (!currency || Object.keys(currency).length === 0) {
+        return;
       }
       currency.flipped = true;
-      currency.rate = 1 / currency.b;
+      currency.rate = (1 / (+currency.b));
 
       // BTCBNB
       // bid == im trying to sell.
@@ -94,7 +113,7 @@ export class CurrencyCore {
     return ret;
   }
 
-  getCandidatesFromStreamViaPath(stream: any, aPair: string, bPair: string) {
+  getCandidatesFromStreamViaPath(stream: IStream, aPair: string, bPair: string) {
     const keys = {
       a: aPair.toUpperCase(),
       b: bPair.toUpperCase(),
@@ -105,7 +124,7 @@ export class CurrencyCore {
     const bpairs = stream.markets[keys.b];
 
     const akeys: { [attr: string]: any } = {};
-    apairs.map((obj: any, i: number, array: any[]) => {
+    apairs.map((obj: Binance24HrTicker, i: number, array: Binance24HrTicker[]) => {
       akeys[obj.s.replace(keys.a, '')] = obj;
     });
 
@@ -117,9 +136,9 @@ export class CurrencyCore {
         for each bpair key, check if apair has it too. 
         If it does, run arbitrage math
     */
-    var bmatches = [];
+    const bmatches = [];
     for (let i = 0; i < bpairs.length; i++) {
-      var bPairTicker = bpairs[i];
+      const bPairTicker = bpairs[i];
       bPairTicker.key = bPairTicker.s.replace(keys.b, '');
 
       // from B to C
@@ -129,28 +148,27 @@ export class CurrencyCore {
       bPairTicker.endsWithKey = bPairTicker.s.endsWith(keys.b);
 
       if (akeys[bPairTicker.key]) {
-        var match = bPairTicker;
+        const match = bPairTicker;
         // check price from bPairTicker.key to keys.a
 
-        var stepC = this.getCurrencyFromStream(stream, match.key, keys.a);
+        const stepC = this.getCurrencyFromStream(stream, match.key, keys.a);
 
         // 如果我们确实找到了一条路一些路径是不可能的, 因此将导致一个空的 stepC 报价。
         if (stepC) {
           keys.c = match.key;
 
-          var comparison = this.getArbitageRate(stream, keys.a, keys.b, keys.c);
+          const comparison = this.getArbitageRate(stream, keys.a, keys.b, keys.c);
 
-          if (comparison) {
+          if (comparison && comparison.a && comparison.b && comparison.c) {
             // console.log('getCandidatesFromStreamViaPath: from/to a: ', comparison.a.stepFrom, comparison.a.stepTo);
             // console.log('getCandidatesFromStreamViaPath: from/to b: ', comparison.b.stepFrom, comparison.b.stepTo);
             // console.log('getCandidatesFromStreamViaPath: from/to c: ', comparison.c.stepFrom, comparison.c.stepTo);
 
-            var dt = new Date();
-            var triangle = {
-              ws_ts: comparison.a.E,
+            const dt = new Date();
+            const triangle = {
               ts: +dt,
               dt: dt,
-
+              ws_ts: comparison.a.E,
               // these are for storage later
               a: comparison.a, //full ticker for first pair (BTC->BNB)
               a_symbol: comparison.a.s,
@@ -175,8 +193,7 @@ export class CurrencyCore {
               b_ask_quantity: comparison.b.A,
               b_volume: comparison.b.v,
               b_trades: comparison.b.n,
-
-              c: comparison.c, ////full ticker for third pair (XMR->BTC)
+              c: comparison.c, //full ticker for third pair (XMR->BTC)
               c_symbol: comparison.c.s,
               c_step_from: comparison.c.stepFrom, //xmr
               c_step_to: comparison.c.stepTo, //btc
@@ -187,10 +204,8 @@ export class CurrencyCore {
               c_ask_quantity: comparison.c.A,
               c_volume: comparison.c.v,
               c_trades: comparison.c.n,
-
               rate: comparison.rate,
             };
-            // debugger;
             bmatches.push(triangle);
 
             // console.log('getCandidatesFromStreamViaPath: from/to a: ', triangle.a_step_from, triangle.a_step_to);
@@ -210,7 +225,7 @@ export class CurrencyCore {
     return bmatches;
   }
 
-  getDynamicCandidatesFromStream(stream: any, options: any) {
+  getDynamicCandidatesFromStream(stream: IStream, options: IArbitrage) {
     var matches: any[] = [];
 
     for (let i = 0; i < options.paths.length; i++) {
@@ -220,7 +235,7 @@ export class CurrencyCore {
     }
 
     if (matches.length) {
-      matches.sort(function(a, b) {
+      matches.sort(function (a, b) {
         return parseFloat(b.rate) - parseFloat(a.rate);
       });
     }
@@ -233,7 +248,7 @@ export class CurrencyCore {
     假设通过 btc 购买 eth
     寻找通过 eth 的购买, 导致回到 btc。
   */
-  getBTCETHCandidatesFromStream(stream: any) {
+  getBTCETHCandidatesFromStream(stream: IStream) {
     const keys = {
       a: 'btc'.toUpperCase(),
       b: 'eth'.toUpperCase(),
@@ -285,7 +300,7 @@ export class CurrencyCore {
     }
 
     if (bmatches.length) {
-      bmatches.sort(function(a, b) {
+      bmatches.sort(function (a, b) {
         return parseFloat(String(b.rate)) - parseFloat(String(a.rate));
       });
     }
@@ -344,9 +359,11 @@ export class CurrencyCore {
   // https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#all-market-tickers-stream
   startAllTickerStream(exchange: any) {
     if (!this.streams.allMarketTickers) {
-      this.streams.allMarketTickers = {};
-      (this.streams.allMarketTickers.arr = []), (this.streams.allMarketTickers.obj = {});
-      this.streams.allMarketTickers.markets = [];
+      this.streams.allMarketTickers = {
+        arr: [],
+        markets: [],
+        obj: {},
+      };
     }
 
     this.sockets.allMarketTickerStream = exchange.WS.onAllTickerStream(this.events.onAllTickerStream);

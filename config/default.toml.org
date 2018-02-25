@@ -10,7 +10,7 @@ maxRows = 40
 ##### Storage settings
 ############################################
 
-mongoHost=localhost
+# mongoHost=localhost
 mongoPort=27017
 mongoDb=BinanceTriArbitrage
 useMongo=true

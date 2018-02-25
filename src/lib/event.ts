@@ -1,9 +1,7 @@
 export class Event {
-  ctrl: any;
   UI: any;
 
   constructor(ctrl: any) {
-    this.ctrl = ctrl;
     this.UI = ctrl.UI;
   }
 

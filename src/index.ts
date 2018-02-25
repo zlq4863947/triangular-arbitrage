@@ -27,9 +27,9 @@ io.on('connection', (socket: any) => {
 
 // express logic
 app.get('/', function (req, res) {
-  res.sendFile(path.resolve(__dirname, '..') + '/public/index.html'); // serve index.html
+  res.sendFile(path.resolve(__dirname, '..', '..') + '/public/index.html'); // serve index.html
 });
-app.use('/', express.static(path.resolve(__dirname, '..') + '/public')); // serve js and css static files in public
+app.use('/', express.static(path.resolve(__dirname, '..', '..') + '/public')); // serve js and css static files in public
 
 server.listen(port, function () {
   console.log('服务开启');

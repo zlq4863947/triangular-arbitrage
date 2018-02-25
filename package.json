@@ -7,13 +7,13 @@
     "url": "https://github.com/zlq4863947/triangular-arbitrage.git"
   },
   "license": "GPL3",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "scripts": {
     "rm": "rimraf dist",
     "format": "prettier --config .prettierrc --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "tsc": "npm run rm && tsc -p tsconfig.development.json",
-    "start": "npm run prepare && node dist/index.js",
+    "start": "npm run prepare && node dist/src/index.js",
     "tslint": "tslint --project ./tslint.json",
     "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
