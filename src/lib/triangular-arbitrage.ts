@@ -36,8 +36,8 @@ export class TriangularArbitrage {
       exchangeAPI = new api.BinanceRest({
         key: config.binance.apiKey,
         secret: config.binance.secret,
-        timeout: config.restTimeout, // 可选，默认为15000，请求超时为毫秒
-        recvWindow: config.restRecvWindow, // 可选，默认为5000，如果您收到时间戳错误，则增加
+        timeout: parseInt(config.restTimeout, 10), // 可选，默认为15000，请求超时为毫秒
+        recvWindow: parseInt(config.restRecvWindow, 10), // 可选，默认为5000，如果您收到时间戳错误，则增加
         disableBeautification: !config.restBeautify,
       });
       exchangeAPI.WS = new api.BinanceWS();
