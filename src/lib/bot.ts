@@ -26,7 +26,7 @@ export class Bot {
         const pairToTrade = this.pairRanker.getPairRanking(this.ctrl.storage.candidates, this.ctrl.storage.pairRanks, this.ctrl);
         if (pairToTrade !== 'none' && this.ctrl.storage.trading.active.length === 0) {
           // this.ctrl.storage.trading.active.push(pairToTrade);
-          // const res = await this.trading.placeOrder(this.ctrl.exchange, pairToTrade);
+          const res = await this.trading.placeOrder(this.ctrl.exchange, pairToTrade);
           // await this.trading.testOrder(this.ctrl.exchange, pairToTrade)
           // console.log("<----GO TRADE---->");
         }
