@@ -1,16 +1,17 @@
-# 配置文件  
+# 配置文件
 
-############################################  
-##### Output UI Settings  
-############################################
+###
+### 画面配置
+###
 
+# 画面输出最大行数
 maxRows = 40 
 
-############################################
-##### Exchange Settings
-############################################
+###
+### 交易所配置
+###
 
-#### 我们连接到哪个交易所？ 当前只支持Binance。
+# 我们连接到哪个交易所？ 当前只支持Binance。
 activeExchange = "binance"
 
 #### Binance REST 设置
@@ -19,33 +20,37 @@ restTimeout = 15000
 restRecvWindow = 10000
 restBeautify = false
 
-#### these are paths we can step through
+#### 这些事我们可以通过的三角套利路径
 ### 起点
 binanceStartingPoint = "BTC"
 
-### The possible currencies we step via
+### 可以套利的基准货币
 binanceColumns = ["BNB", "ETH", "USDT"]
 
-#####################################
-#### Calculation Settings ##########
-##################################
+###
+### 排名计算配置
+###
 
-# Pair ranking
+# 最小盈利率
 minimalProfit = 1.02
-#default 15 minutes, in MS
+# 数据过滤时间，默认15分钟（秒）
 pairTimer = 900000
 
+###
 ### 账户相关配置
 ###
+
 # 库币 
 [kucoin]
   apiKey = "c"
   secret = "x"
+
 # binance
 [binance]
   # 账号
   apiKey = "xxz"
   secret = "cx"
+
 # bitbank.cc 
 [bitbankcc]
   # 账号
