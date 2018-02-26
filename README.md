@@ -18,6 +18,6 @@ npm start
 
 ## 疑难解答
 
-Q：toml配置文件配置出错?
+Q：toml配置如何改为json配置?
 
 A：可以把toml后缀改成json,然后通过[这个地址](https://toml-to-json.matiaskorhonen.fi/)，把toml格式配置转换成json格式。
