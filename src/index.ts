@@ -3,7 +3,6 @@ import * as socketIO from 'socket.io';
 import { TriangularArbitrage } from './lib/triangular-arbitrage';
 
 const path = require('path');
-const opn = require('opn');
 const app = express();
 const server = require('http').createServer(app);
 const io = socketIO(server);
@@ -32,8 +31,6 @@ app.get('/', function(req, res) {
 app.use('/', express.static(path.resolve(__dirname, '..', '..') + '/public')); // serve js and css static files in public
 
 server.listen(port, function() {
-  console.log('服务开启');
-  try {
-    opn('http://127.0.0.1:' + port);
-  } catch (err) {}
+  console.log('服务已开启！');
+  console.log('请使用浏览器打开: http://127.0.0.1:' + port);
 }); // start the server
