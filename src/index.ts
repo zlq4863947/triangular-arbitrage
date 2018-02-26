@@ -33,5 +33,7 @@ app.use('/', express.static(path.resolve(__dirname, '..', '..') + '/public')); /
 
 server.listen(port, function() {
   console.log('服务开启');
-  opn('http://127.0.0.1:' + port);
+  try {
+    opn('http://127.0.0.1:' + port);
+  } catch {}
 }); // start the server
