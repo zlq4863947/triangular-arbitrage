@@ -366,7 +366,6 @@ export class CurrencyCore {
     return d;
   }
 
-
   // 为所有选择器启动一个全局数据流。数据流每秒反馈一次信息:
   // https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#all-market-tickers-stream
   startAllTickerStream(exchange: any) {

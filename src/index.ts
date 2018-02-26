@@ -35,5 +35,5 @@ server.listen(port, function() {
   console.log('服务开启');
   try {
     opn('http://127.0.0.1:' + port);
-  } catch {}
+  } catch (err) {}
 }); // start the server
