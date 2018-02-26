@@ -7,55 +7,33 @@
 maxRows = 40 
 
 ############################################
-##### Storage settings
-############################################
-
-# mongoHost=localhost
-mongoPort=27017
-mongoDb=BinanceTriArbitrage
-useMongo=true
-
-##################################
-##### Logging Settings 
-##################################
-## 如果useMongo = false，它们是不活动的
-
-# 计算每个逐笔数据的套利机会
-arbitrageTicksTable=ticks_arbitrage
-
-# Raw ticks coming from the websocket stream. Usually a tick every 1s.
-rawTicksTable=ticks_raw
-
-
-############################################
 ##### Exchange Settings
 ############################################
 
 #### 我们连接到哪个交易所？ 当前只支持Binance。
-activeExchange=binance
+activeExchange = "binance"
 
 #### Binance REST 设置
 ### 用于控制和检查订单
-restTimeout=15000
-restRecvWindow=10000
-restBeautify=false
+restTimeout = 15000
+restRecvWindow = 10000
+restBeautify = false
 
 #### these are paths we can step through
 ### 起点
-binanceStartingPoint=BTC
+binanceStartingPoint = "BTC"
 
 ### The possible currencies we step via
-binanceColumns=BNB,ETH,USDT
+binanceColumns = ["BNB", "ETH", "USDT"]
 
 #####################################
 #### Calculation Settings ##########
 ##################################
 
 # Pair ranking
-pairRankerTable=pair_ranking
-minimalProfit=1.02
+minimalProfit = 1.02
 #default 15 minutes, in MS
-pairTimer=900000
+pairTimer = 900000
 
 ### 账户相关配置
 ###
@@ -66,8 +44,8 @@ pairTimer=900000
 # binance
 [binance]
   # 账号
-  apiKey = "1K"
-  secret = "f3"
+  apiKey = "xxz"
+  secret = "cx"
 # bitbank.cc 
 [bitbankcc]
   # 账号

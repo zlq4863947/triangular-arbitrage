@@ -29,7 +29,7 @@ export class PairRanker {
       check = this.getTopPairs(candidates[k], pairRanks);
       // if (check) {
       returnValue = candidates[k];
-      //}
+      // }
     }
 
     ctrl.storage.pairRanks = pairRanks;
@@ -53,9 +53,10 @@ export class PairRanker {
     let check = false;
     const id = this.getCandidateId(pairToCheck);
     const pairsToCheck = pairRanks.filter((pairRank: IPairRank) => {
-      return pairRank.id == id;
+      return pairRank.id === id;
     });
-    let rate = 0, checkLen = pairsToCheck.length;
+    let rate = 0,
+      checkLen = pairsToCheck.length;
     for (let i = 0; i < pairsToCheck.length; i++) {
       if (pairsToCheck[i].rate) {
         rate += pairsToCheck[i].rate;

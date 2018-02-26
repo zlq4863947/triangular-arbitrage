@@ -1,5 +1,4 @@
 import { logger } from './logger';
-import { Database } from './database';
 import { Bot } from './bot';
 import { UI } from './ui';
 import { Event } from './event';
@@ -29,7 +28,7 @@ export class TriangularArbitrage {
     logger.info('--- 加载交易所API');
 
     // 使交易所模块动态更新
-    if (config.activeExchange == 'binance') {
+    if (config.activeExchange === 'binance') {
       logger.info('--- \t激活的交易所:' + config.activeExchange);
       // activePairs = config.binancePairs;
 
@@ -37,8 +36,8 @@ export class TriangularArbitrage {
       exchangeAPI = new api.BinanceRest({
         key: config.binance.apiKey,
         secret: config.binance.secret,
-        timeout: parseInt(config.restTimeout), // 可选，默认为15000，请求超时为毫秒
-        recvWindow: parseInt(config.restRecvWindow), // 可选，默认为5000，如果您收到时间戳错误，则增加
+        timeout: config.restTimeout, // 可选，默认为15000，请求超时为毫秒
+        recvWindow: config.restRecvWindow, // 可选，默认为5000，如果您收到时间戳错误，则增加
         disableBeautification: !config.restBeautify,
       });
       exchangeAPI.WS = new api.BinanceWS();
@@ -50,11 +49,8 @@ export class TriangularArbitrage {
         title: '最有潜力的三角套利，通过: ' + config.binanceColumns,
       },
       arbitrage: {
-        paths: config.binanceColumns.split(','),
+        paths: config.binanceColumns,
         start: config.binanceStartingPoint,
-      },
-      storage: {
-        logHistory: false,
       },
       trading: {
         paperOnly: true,
@@ -78,24 +74,17 @@ export class TriangularArbitrage {
         candidates: [],
         streams: <IStreams>{},
         pairRanks: [],
-        streamTick: <any>{}
+        streamTick: <any>{},
       },
       logger: logger,
       exchange: exchangeAPI,
       UI: <UI>{},
       events: <Event>{},
-      currencyCore: <CurrencyCore>{}
+      currencyCore: <CurrencyCore>{},
     };
 
-    // 加载数据库，然后启动DB并连接后启动数据流
+    // 启动数据流
     try {
-      /*const database = new Database();
-      const mongo = await database.startup(logger);
-
-      if (config.useMongo) {
-        ctrl.storage.db = mongo;
-        ctrl.options.storage.logHistory = true;
-      }*/
       ctrl.UI = new UI(ctrl.options);
       ctrl.events = new Event(ctrl);
 
@@ -105,8 +94,7 @@ export class TriangularArbitrage {
 
       ctrl.logger.info('----- 机器人启动完成 -----');
     } catch (err) {
-      ctrl.logger.error('MongoDB连接不可用，禁用历史记录: ' + err);
-      ctrl.options.storage.logHistory = false;
+      ctrl.logger.error('机器人运行出错: ' + err);
     }
   }
 }

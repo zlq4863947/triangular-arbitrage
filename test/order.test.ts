@@ -4,8 +4,8 @@ const api = require('binance');
 const exchangeAPI = new api.BinanceRest({
   key: config.binance.apiKey,
   secret: config.binance.secret,
-  timeout: parseInt(config.restTimeout), // 可选，默认为15000，请求超时为毫秒
-  recvWindow: parseInt(config.restRecvWindow), // 可选，默认为5000，如果您收到时间戳错误，则增加
+  timeout: parseInt(config.restTimeout, 10), // 可选，默认为15000，请求超时为毫秒
+  recvWindow: parseInt(config.restRecvWindow, 10), // 可选，默认为5000，如果您收到时间戳错误，则增加
   disableBeautification: !config.restBeautify,
 });
 const testOrder = async () => {
@@ -16,8 +16,8 @@ const testOrder = async () => {
     type: 'MARKET',
     // timeInForce: 'GTC',
     quantity: unit,
-    timestamp: Date.now()
-  }
+    timestamp: Date.now(),
+  };
   /*const account = await exchangeAPI.account();
   if (account) {
     const btcAsset = (<Array<any>>account.balances).find((o: any, index: number, arr: any[]) => {
@@ -37,7 +37,7 @@ const exInfo = async () => {
     console.log(btcAsset)
   }*/
   const res = await exchangeAPI.exchangeInfo();
-  console.log(res)
+  console.log(res);
   // assert(symbolInfo);
 };
 

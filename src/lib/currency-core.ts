@@ -10,9 +10,38 @@ export class CurrencyCore {
   steps: string[];
   exchangeInfo: any;
 
+  // 每秒触发一次, 所有来自 Binance 的ticker数据
+  events = {
+    onAllTickerStream: (stream: any) => {
+      const key = 'allMarketTickers';
+
+      // Basic array from api arr[0].s = ETHBTC
+      this.streams.allMarketTickers.arr = stream;
+
+      // Mapped object arr[ETHBTC]
+      this.streams.allMarketTickers.obj = stream.reduce((array: any[], current: any) => {
+        array[current.s] = current;
+        return array;
+      }, {});
+
+      // 仅具有特定市场数据的子对象
+      for (let i = 0; i < this.steps.length; i++) {
+        this.streams.allMarketTickers.markets[this.steps[i]] = stream.filter(
+          (e: any) => e.s.endsWith(this.steps[i]) || e.s.startsWith(this.steps[i]),
+        );
+      }
+
+      // 这里有点不对劲。 BNB列表没有BTC，虽然BTC列表也没有。
+
+      if (this.controller && this.controller.storage.streamTick) {
+        this.controller.storage.streamTick(this.streams[key], key);
+      }
+    },
+  };
+
   constructor(ctrl: any) {
     if (!ctrl.exchange) {
-      throw '未定义的交易所连接器。 将无法与交易所API进行通信。';
+      throw new Error('未定义的交易所连接器。 将无法与交易所API进行通信。');
     }
 
     // Stores
@@ -24,19 +53,17 @@ export class CurrencyCore {
   }
 
   async start() {
-    //CurrencyCore.startWSockets(exchange, ctrl);
+    // CurrencyCore.startWSockets(exchange, ctrl);
     this.exchangeInfo = await this.controller.exchange.exchangeInfo();
     this.startAllTickerStream(this.controller.exchange);
-    this.queueTicker(5000);
+    // this.queueTicker(5000);
   }
 
   getDecimalsNum(pair: string) {
     const symbol = this.exchangeInfo.symbols.find((o: any) => o.symbol === pair);
     if (symbol) {
-
       const sizeFilter = symbol.filters.find((o: any) => o.filterType === 'LOT_SIZE');
       if (sizeFilter) {
-
         const arr = (+sizeFilter.minQty).toString().split('.');
         if (arr.length > 1) {
           return arr[1].length;
@@ -48,17 +75,21 @@ export class CurrencyCore {
 
   queueTicker(interval: number) {
     const that = this;
-    if (!interval) interval = 3000;
+    if (!interval) {
+      interval = 3000;
+    }
     setTimeout(() => {
       that.queueTicker(interval);
     }, interval);
     that.tick();
   }
 
-  tick() { }
+  tick() {}
 
   getCurrencyFromStream(stream: IStream, fromCur: string, toCur: string) {
-    if (!stream || !fromCur || !toCur) return;
+    if (!stream || !fromCur || !toCur) {
+      return;
+    }
 
     /*
      Binance使用xxxBTC表示法。 如果我们正在考虑xxxBTC，并且我们希望从BTC到xxx，那意味着我们正在购买，反之亦然。
@@ -79,7 +110,7 @@ export class CurrencyCore {
         return;
       }
       currency.flipped = true;
-      currency.rate = (1 / (+currency.b));
+      currency.rate = 1 / +currency.b;
 
       // BTCBNB
       // bid == im trying to sell.
@@ -89,7 +120,7 @@ export class CurrencyCore {
 
     currency.tradeInfo = {
       symbol: currency.s,
-      side: currency.flipped == true ? 'SELL' : 'BUY',
+      side: currency.flipped === true ? 'SELL' : 'BUY',
       type: 'MARKET',
       quantity: 1,
     };
@@ -99,7 +130,9 @@ export class CurrencyCore {
   }
 
   getArbitageRate(stream: any, step1: string, step2: string, step3: string) {
-    if (!stream || !step1 || !step2 || !step3) return;
+    if (!stream || !step1 || !step2 || !step3) {
+      return;
+    }
     const ret = {
       a: this.getCurrencyFromStream(stream, step1, step2),
       b: this.getCurrencyFromStream(stream, step2, step3),
@@ -107,7 +140,9 @@ export class CurrencyCore {
       rate: 0,
     };
 
-    if (!ret.a || !ret.b || !ret.c) return;
+    if (!ret.a || !ret.b || !ret.c) {
+      return;
+    }
 
     ret.rate = ret.a.rate * ret.b.rate * ret.c.rate;
     return ret;
@@ -133,7 +168,7 @@ export class CurrencyCore {
 
     /*
       Loop through BPairs
-        for each bpair key, check if apair has it too. 
+        for each bpair key, check if apair has it too.
         If it does, run arbitrage math
     */
     const bmatches = [];
@@ -170,10 +205,10 @@ export class CurrencyCore {
               dt: dt,
               ws_ts: comparison.a.E,
               // these are for storage later
-              a: comparison.a, //full ticker for first pair (BTC->BNB)
+              a: comparison.a, // full ticker for first pair (BTC->BNB)
               a_symbol: comparison.a.s,
-              a_step_from: comparison.a.stepFrom, //btc
-              a_step_to: comparison.a.stepTo, //bnb
+              a_step_from: comparison.a.stepFrom, // btc
+              a_step_to: comparison.a.stepTo, // bnb
               a_step_type: comparison.a.tradeInfo.side,
               a_bid_price: comparison.a.b,
               a_bid_quantity: comparison.a.B,
@@ -182,10 +217,10 @@ export class CurrencyCore {
               a_volume: comparison.a.v,
               a_trades: comparison.a.n,
 
-              b: comparison.b, //full ticker for second pair (BNB->XMR)
+              b: comparison.b, // full ticker for second pair (BNB->XMR)
               b_symbol: comparison.b.s,
-              b_step_from: comparison.b.stepFrom, //bnb
-              b_step_to: comparison.b.stepTo, //xmr
+              b_step_from: comparison.b.stepFrom, // bnb
+              b_step_to: comparison.b.stepTo, // xmr
               b_step_type: comparison.b.tradeInfo.side,
               b_bid_price: comparison.b.b,
               b_bid_quantity: comparison.b.B,
@@ -193,10 +228,10 @@ export class CurrencyCore {
               b_ask_quantity: comparison.b.A,
               b_volume: comparison.b.v,
               b_trades: comparison.b.n,
-              c: comparison.c, //full ticker for third pair (XMR->BTC)
+              c: comparison.c, // full ticker for third pair (XMR->BTC)
               c_symbol: comparison.c.s,
-              c_step_from: comparison.c.stepFrom, //xmr
-              c_step_to: comparison.c.stepTo, //btc
+              c_step_from: comparison.c.stepFrom, // xmr
+              c_step_to: comparison.c.stepTo, // btc
               c_step_type: comparison.c.tradeInfo.side,
               c_bid_price: comparison.c.b,
               c_bid_quantity: comparison.c.B,
@@ -226,16 +261,16 @@ export class CurrencyCore {
   }
 
   getDynamicCandidatesFromStream(stream: IStream, options: IArbitrage) {
-    var matches: any[] = [];
+    let matches: any[] = [];
 
     for (let i = 0; i < options.paths.length; i++) {
-      var pMatches = this.getCandidatesFromStreamViaPath(stream, options.start, options.paths[i]);
+      const pMatches = this.getCandidatesFromStreamViaPath(stream, options.start, options.paths[i]);
       matches = matches.concat(pMatches);
       // console.log("adding: " + pMatches.length + " to : " + matches.length);
     }
 
     if (matches.length) {
-      matches.sort(function (a, b) {
+      matches.sort(function(a, b) {
         return parseFloat(b.rate) - parseFloat(a.rate);
       });
     }
@@ -255,10 +290,10 @@ export class CurrencyCore {
       c: 'findme'.toUpperCase(),
     };
 
-    var apairs = stream.markets.BTC;
-    var bpairs = stream.markets.ETH;
+    const apairs = stream.markets.BTC;
+    const bpairs = stream.markets.ETH;
 
-    var akeys: { [attr: string]: any } = {};
+    const akeys: { [attr: string]: any } = {};
     apairs.map((obj: any, i: number, array: any[]) => {
       akeys[obj.s.replace(keys.a, '')] = obj;
     });
@@ -268,12 +303,12 @@ export class CurrencyCore {
 
     /*
       Loop through BPairs
-        for each bpair key, check if apair has it too. 
+        for each bpair key, check if apair has it too.
         If it does, run arbitrage math
     */
-    var bmatches = [];
+    const bmatches = [];
     for (let i = 0; i < bpairs.length; i++) {
-      var bPairTicker = bpairs[i];
+      const bPairTicker = bpairs[i];
       bPairTicker.key = bPairTicker.s.replace(keys.b, '');
 
       // from B to C
@@ -283,12 +318,12 @@ export class CurrencyCore {
       bPairTicker.endsWithKey = bPairTicker.s.endsWith(keys.b);
 
       if (akeys[bPairTicker.key]) {
-        var match = bPairTicker;
+        const match = bPairTicker;
 
         keys.c = match.key;
 
-        var rate = this.getArbitageRate(stream, keys.a, keys.b, keys.c);
-        var triangle = {
+        const rate = this.getArbitageRate(stream, keys.a, keys.b, keys.c);
+        const triangle = {
           a: keys.a,
           b: keys.b,
           c: keys.c,
@@ -300,7 +335,7 @@ export class CurrencyCore {
     }
 
     if (bmatches.length) {
-      bmatches.sort(function (a, b) {
+      bmatches.sort(function(a, b) {
         return parseFloat(String(b.rate)) - parseFloat(String(a.rate));
       });
     }
@@ -308,52 +343,29 @@ export class CurrencyCore {
   }
 
   simpleArbitrageMath(stream: any, candidates: any) {
-    if (!stream || !candidates) return;
-    //EURUSD * (1/GBPUSD) * (1/EURGBP) = 1
+    if (!stream || !candidates) {
+      return;
+    }
+    // EURUSD * (1/GBPUSD) * (1/EURGBP) = 1
 
-    //start btc
-    //via xUSDT
-    //end btc
+    // start btc
+    // via xUSDT
+    // end btc
 
     const a = candidates['BTCUSDT'];
     const b = candidates['ETHUSDT'];
     const c = candidates['ETHBTC'];
 
-    if (!a || isNaN(a) || !b || isNaN(b) || !c || isNaN(c)) return;
+    if (!a || isNaN(a) || !b || isNaN(b) || !c || isNaN(c)) {
+      return;
+    }
 
-    //btcusd : (flip/usdEth) : ethbtc
+    // btcusd : (flip/usdEth) : ethbtc
     const d = a.b * (1 / b.b) * c.b;
 
     return d;
   }
 
-  // 每秒触发一次, 所有来自 Binance 的ticker数据
-  events = {
-    onAllTickerStream: (stream: any) => {
-      var key = 'allMarketTickers';
-
-      // Basic array from api arr[0].s = ETHBTC
-      this.streams.allMarketTickers.arr = stream;
-
-      // Mapped object arr[ETHBTC]
-      this.streams.allMarketTickers.obj = stream.reduce((array: any[], current: any) => {
-        array[current.s] = current;
-        return array;
-      }, {});
-
-      // 仅具有特定市场数据的子对象
-      for (let i = 0; i < this.steps.length; i++)
-        this.streams.allMarketTickers.markets[this.steps[i]] = stream.filter(
-          (e: any) => e.s.endsWith(this.steps[i]) || e.s.startsWith(this.steps[i]),
-        );
-
-      // 这里有点不对劲。 BNB列表没有BTC，虽然BTC列表也没有。
-
-      if (this.controller && this.controller.storage.streamTick) {
-        this.controller.storage.streamTick(this.streams[key], key);
-      }
-    },
-  };
 
   // 为所有选择器启动一个全局数据流。数据流每秒反馈一次信息:
   // https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#all-market-tickers-stream

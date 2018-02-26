@@ -1,4 +1,5 @@
 import { Binance24HrTicker } from './binance';
+import { CurrencyCore } from '../currency-core';
 
 export * from './binance';
 
@@ -12,9 +13,10 @@ export interface IPairRank {
   date: Date;
 }
 
+/*
 export interface ICandidate {
 
-}
+}*/
 
 export interface IArbitrage {
   paths: string[];
@@ -24,9 +26,6 @@ export interface IArbitrage {
 export interface IBotOptions {
   socket: any;
   arbitrage: IArbitrage;
-  storage: {
-    logHistory: boolean;
-  };
   trading: {
     paperOnly: boolean;
     minQueuePercentageThreshold: number;
@@ -81,5 +80,5 @@ export interface ICtrl {
   events: any;
   UI: any;
   storage: IStorage;
-  currencyCore: any;
+  currencyCore: CurrencyCore;
 }

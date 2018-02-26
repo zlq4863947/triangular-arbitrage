@@ -3,7 +3,7 @@ import { CurrencyCore } from './currency-core';
 import { IStream, ITradeInfo } from './type';
 
 export class Trading extends EventEmitter {
-  logger: any
+  logger: any;
   _started: number;
   _minQueuePercentageThreshold: number;
   _minHitsThreshold: number;
@@ -17,7 +17,9 @@ export class Trading extends EventEmitter {
   constructor(opts: any, currencyCore: CurrencyCore, logger: any) {
     super();
 
-    if (!(this instanceof Trading)) return new Trading(opts, currencyCore, logger);
+    if (!(this instanceof Trading)) {
+      return new Trading(opts, currencyCore, logger);
+    }
 
     this._started = Date.now();
     // 最小队列百分比阈值
@@ -32,10 +34,10 @@ export class Trading extends EventEmitter {
     const self = this;
 
     for (let i = 0; i < candidates.length; i++) {
-      let cand = candidates[i];
+      const cand = candidates[i];
 
       if (cand.rate >= this._minQueuePercentageThreshold) {
-        let key = cand.a_step_from + cand.b_step_from + cand.c_step_from;
+        const key = cand.a_step_from + cand.b_step_from + cand.c_step_from;
 
         // store in queue using trio key. If new, initialise rates and hits. Else increment hits by 1.
         if (!queue[key]) {
@@ -56,7 +58,7 @@ export class Trading extends EventEmitter {
     // 在队列的最开始放置最合适的候选
     if (queue && queue.length > 0) {
       queue.sort((a: any, b: any) => {
-        return parseInt(b.hits) - parseInt(a.hits);
+        return parseInt(b.hits, 10) - parseInt(a.hits, 10);
       });
 
       self.candidateQueue = queue;
@@ -70,13 +72,13 @@ export class Trading extends EventEmitter {
   // 处理队列中的元素
   processQueue(queue: any, stream: any, time: number) {
     const self = this;
-    let keys = Object.keys(queue);
+    const keys = Object.keys(queue);
 
     for (let i = 0; i < keys.length; i++) {
-      let cand = queue[keys[i]];
+      const cand = queue[keys[i]];
 
       if (cand.hits >= this._minHitsThreshold) {
-        let liveRate = self._currencyCore.getArbitageRate(stream, cand.a_step_from, cand.b_step_from, cand.c_step_from);
+        const liveRate = self._currencyCore.getArbitageRate(stream, cand.a_step_from, cand.b_step_from, cand.c_step_from);
         if (liveRate && liveRate.rate >= this._minQueuePercentageThreshold) {
           self.emit('newTradeQueued', cand, self.time());
 
@@ -88,9 +90,7 @@ export class Trading extends EventEmitter {
 
   // 模拟下单
   async testOrder(api: any, pairToTrade: any) {
-
     try {
-
       // 查询资产
       const account = await api.account();
       if (!account) {
@@ -109,7 +109,6 @@ export class Trading extends EventEmitter {
       const afterBtc = buyBtc / pairToTrade.a_bid_price / pairToTrade.b_bid_price * pairToTrade.c_ask_price;
       this.logger.info('模拟下单...');
       this.logger.info(`使用btc：${buyBtc}，获得btc: ${afterBtc},盈利%：${((afterBtc - buyBtc) / buyBtc * 100).toFixed(3)}%`);
-
     } catch (err) {
       this.logger.error(`订单出错： ${err.stack ? err.stack : err.msg}`);
     }
@@ -120,7 +119,6 @@ export class Trading extends EventEmitter {
     // this.logger.info(`pairToTrade: ${JSON.stringify(pairToTrade, null, 2)}`);
 
     try {
-
       // 查询资产
       const account = await api.account();
       if (!account) {
@@ -135,23 +133,22 @@ export class Trading extends EventEmitter {
 
       const freeMoney = +btcAsset.free;
       // 使用1%的资产购买
-      const buyMoney = this._first = freeMoney * 0.01;
+      const buyMoney = (this._first = freeMoney * 0.01);
       const quantity = (buyMoney / pairToTrade.a_bid_price).toFixed(this._currencyCore.getDecimalsNum(pairToTrade.a_symbol));
-      this.logger.info('第一步')
+      this.logger.info('第一步');
       this.logger.info(`市价${pairToTrade.a_step_type}: ${pairToTrade.a_symbol},数量（${quantity}）,使用比特币（${buyMoney}）`);
       const order = {
         symbol: pairToTrade.a_symbol,
         side: pairToTrade.a_step_type,
         type: 'MARKET',
         quantity,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      };
       const res = await api.newOrder(order);
       this.logger.info(`下单返回值: ${JSON.stringify(res, null, 2)}`);
       const nextB = async () => {
-
         this.logger.info('执行nextB...');
-        let orderInfo = await api.queryOrder({
+        const orderInfo = await api.queryOrder({
           symbol: order.symbol,
           orderId: res.orderId,
           origClientOrderId: res.clientOrderId,
@@ -179,7 +176,7 @@ export class Trading extends EventEmitter {
   }
 
   async orderB(api: any, pairToTrade: any) {
-    this.logger.info('第二步')
+    this.logger.info('第二步');
 
     try {
       // 查询资产
@@ -198,21 +195,22 @@ export class Trading extends EventEmitter {
       const freeMoney = +asset.free;
       // 这里总报错说余额不足，暂时只购买97%
       const quantity = (freeMoney / pairToTrade.b_bid_price * 0.97).toFixed(this._currencyCore.getDecimalsNum(pairToTrade.b_symbol));
-      this.logger.info(`市价${pairToTrade.b_step_type}: ${pairToTrade.b_symbol},数量（${quantity}）,使用${pairToTrade.b_step_from}（${freeMoney}）`);
+      this.logger.info(
+        `市价${pairToTrade.b_step_type}: ${pairToTrade.b_symbol},数量（${quantity}）,使用${pairToTrade.b_step_from}（${freeMoney}）`,
+      );
       const order = {
         symbol: pairToTrade.b_symbol,
         side: pairToTrade.b_step_type,
         type: 'MARKET',
         quantity,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      };
       const res = await api.newOrder(order);
       this.logger.info(`下单返回值: ${JSON.stringify(res, null, 2)}`);
 
       const nextC = async () => {
-
         this.logger.info('执行nextC...');
-        let orderInfo = await api.queryOrder({
+        const orderInfo = await api.queryOrder({
           symbol: order.symbol,
           orderId: res.orderId,
           origClientOrderId: res.clientOrderId,
@@ -256,23 +254,24 @@ export class Trading extends EventEmitter {
         return;
       }
       const freeMoney = +asset.free;
-      const quantity = (freeMoney).toFixed(this._currencyCore.getDecimalsNum(pairToTrade.c_symbol));
+      const quantity = freeMoney.toFixed(this._currencyCore.getDecimalsNum(pairToTrade.c_symbol));
       this._last = pairToTrade.c_ask_price * +quantity;
-      this.logger.info(`市价${pairToTrade.c_step_type}: ${pairToTrade.c_symbol},数量（${quantity}）,使用${pairToTrade.c_step_from}（${freeMoney}）`);
+      this.logger.info(
+        `市价${pairToTrade.c_step_type}: ${pairToTrade.c_symbol},数量（${quantity}）,使用${pairToTrade.c_step_from}（${freeMoney}）`,
+      );
       const order = {
         symbol: pairToTrade.c_symbol,
         side: pairToTrade.c_step_type,
         type: 'MARKET',
         quantity,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      };
       const res = await api.newOrder(order);
       this.logger.info(`下单返回值: ${JSON.stringify(res, null, 2)}`);
 
       const completedC = async () => {
-
         this.logger.info('completedC...');
-        let orderInfo = await api.queryOrder({
+        const orderInfo = await api.queryOrder({
           symbol: order.symbol,
           orderId: res.orderId,
           origClientOrderId: res.clientOrderId,
@@ -286,7 +285,8 @@ export class Trading extends EventEmitter {
 
           this.logger.info(`三角套利完成（${pairToTrade.a_symbol}->${pairToTrade.b_symbol}）`);
           if (this._first && this._last) {
-            // this.logger.info(`计算本次利润：(保有量[${this._last}]-前次保有量[${this._first}]）/前次保有量[${this._first}]*100% = ${((this._last - this._first) / this._first * 100).toFixed(3)}%`);
+            // this.logger.info(`计算本次利润：(保有量[${this._last}]-前次保有量[${this._first}]）/前次保有量[${this._first}]*100% =
+            // ${((this._last - this._first) / this._first * 100).toFixed(3)}%`);
             // 清空数值
             this._first = this._last = 0;
           }
