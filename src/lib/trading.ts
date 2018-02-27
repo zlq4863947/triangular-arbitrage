@@ -5,7 +5,7 @@ import { IStream, ITradeInfo } from './type';
 export class Trading extends EventEmitter {
   logger: any;
   _started: number;
-  _minQueuePercentageThreshold: number;
+  _minQueueRateThreshold: number;
   _minHitsThreshold: number;
   _currencyCore: CurrencyCore;
   _activeTrades: any;
@@ -23,7 +23,7 @@ export class Trading extends EventEmitter {
 
     this._started = Date.now();
     // 最小队列百分比阈值
-    this._minQueuePercentageThreshold = opts.minQueuePercentageThreshold ? opts.minQueuePercentageThreshold / 100 + 1 : 0;
+    this._minQueueRateThreshold = opts.minQueueRateThreshold ? opts.minQueueRateThreshold / 100 + 1 : 0;
     this._minHitsThreshold = opts.minHitsThreshold ? opts.minHitsThreshold : 0;
     this._currencyCore = currencyCore;
     this._activeTrades = {};
@@ -36,7 +36,7 @@ export class Trading extends EventEmitter {
     for (let i = 0; i < candidates.length; i++) {
       const cand = candidates[i];
 
-      if (cand.rate >= this._minQueuePercentageThreshold) {
+      if (cand.rate >= this._minQueueRateThreshold) {
         const key = cand.a_step_from + cand.b_step_from + cand.c_step_from;
 
         // store in queue using trio key. If new, initialise rates and hits. Else increment hits by 1.
@@ -79,7 +79,7 @@ export class Trading extends EventEmitter {
 
       if (cand.hits >= this._minHitsThreshold) {
         const liveRate = self._currencyCore.getArbitageRate(stream, cand.a_step_from, cand.b_step_from, cand.c_step_from);
-        if (liveRate && liveRate.rate >= this._minQueuePercentageThreshold) {
+        if (liveRate && liveRate.rate >= this._minQueueRateThreshold) {
           self.emit('newTradeQueued', cand, self.time());
 
           // begin trading logic. Plan:

@@ -11,7 +11,7 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
 
-const tsFormat = () => new Date().toLocaleTimeString();
+const tsFormat = () => Date.now();
 const myFormat = printf((info: any) => {
   return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
 });

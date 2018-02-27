@@ -1,25 +1,26 @@
-import { IPairRank } from './type';
+import { IRank } from './type';
 
 const config = require('config');
 
-export class PairRanker {
+export class Ranker {
   // 将每个唯一对存储在一个对象中并跟踪平均排名
-  getPairRanking(candidates: any, pairRanks: IPairRank[], ctrl: any) {
-    for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates[i];
+  rank(candidates: any[]) {
+    let pairRanks: IRank[] = [];
+    candidates.reduce((candidate: any) => {
       const pair = {
         // 创建唯一ID，以便我们可以从数组中过滤它
         id: this.getCandidateId(candidate),
-        step_a: candidate['a_step_from'],
-        step_b: candidate['a_step_to'],
-        step_c: candidate['b_step_to'],
-        step_d: candidate['c_step_to'],
+        stepA: candidate['a_step_from'],
+        stepB: candidate['a_step_to'],
+        stepC: candidate['b_step_to'],
+        // todo
+        stepD: candidate['c_step_to'],
         rate: candidate['rate'],
         date: new Date(),
       };
       pairRanks.push(pair);
-    }
-    pairRanks = this.cleanPairingArray(pairRanks);
+    });
+    pairRanks = this.clean(pairRanks);
 
     let check = false;
     let k = -1;
@@ -42,9 +43,9 @@ export class PairRanker {
   }
 
   // 过滤比X时间旧的数据。
-  cleanPairingArray(pairRanks: any) {
+  clean(pairRanks: any) {
     return pairRanks.filter((pair: { [attr: string]: any }) => {
-      return pair.date > Date.now() - config.pairTimer;
+      return pair.date > Date.now() - config.rank.pairTimer;
     });
   }
 
