@@ -1,6 +1,8 @@
+import { ITriangle } from './trading';
+
 export interface IStorage {
   // 候选者
-  candidates: any[];
+  candidates: ICandidte[];
   ranks: IRank[];
   trading: {
     // 套利队列
@@ -19,4 +21,16 @@ export interface IRank {
   stepB: string;
   stepC: string;
   date: Date;
+}
+
+/**
+ * 交易候补者
+ */
+export interface ICandidte {
+  id: string;
+  base: string;
+  stepA: string;
+  stepB: string;
+  stepC: string;
+  details: ITriangle;
 }

@@ -7,13 +7,13 @@ export class Helper {
   static getPrivateKey(exchangeId: types.ExchangeId) {
     if (config.account[exchangeId] && config.account[exchangeId].apiKey && config.account[exchangeId].secret) {
       return <types.ICredentials>{
-        apiKey: config[exchangeId].account.apiKey,
-        secret: config[exchangeId].account.secret,
+        apiKey: config.account[exchangeId].apiKey,
+        secret: config.account[exchangeId].secret,
       };
     }
   }
 
-  static getExchangeApi(exchange: types.ExchangeId): types.IExchangeApi | undefined {
+  static getExchange(exchange: types.ExchangeId): types.IExchange | undefined {
     const privateKey = Helper.getPrivateKey(exchange);
     switch (exchange) {
       case types.ExchangeId.KuCoin:
@@ -21,14 +21,16 @@ export class Helper {
         if (privateKey) {
           return {
             id: exchange,
-            type: 'private',
-            endpoint: new ccxt[exchange](privateKey),
+            endpoint: {
+              private: new ccxt[exchange](privateKey),
+            },
           };
         }
         return {
           id: exchange,
-          type: 'public',
-          endpoint: new ccxt[exchange](),
+          endpoint: {
+            public: new ccxt[exchange](privateKey),
+          },
         };
       case types.ExchangeId.Bitbank:
       // todo

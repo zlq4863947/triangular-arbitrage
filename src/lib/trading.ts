@@ -1,20 +1,20 @@
 import { EventEmitter } from 'events';
-import { CurrencyCore } from './currency-core';
-import { IStream, ITradeInfo } from './type';
+// import { CurrencyCore } from './currency-core';
+import { ITradeInfo } from './type';
 
 export class Trading extends EventEmitter {
   logger: any;
   _started: number;
   _minQueueRateThreshold: number;
   _minHitsThreshold: number;
-  _currencyCore: CurrencyCore;
+  _currencyCore: any;
   _activeTrades: any;
   candidateQueue: any;
   _worker: number;
   _first: number;
   _last: number;
 
-  constructor(opts: any, currencyCore: CurrencyCore, logger: any) {
+  constructor(opts: any, currencyCore: any, logger: any) {
     super();
 
     if (!(this instanceof Trading)) {
@@ -28,45 +28,6 @@ export class Trading extends EventEmitter {
     this._currencyCore = currencyCore;
     this._activeTrades = {};
     this.logger = logger;
-  }
-
-  updateCandidateQueue(stream: IStream, candidates: any, queue: any) {
-    const self = this;
-
-    for (let i = 0; i < candidates.length; i++) {
-      const cand = candidates[i];
-
-      if (cand.rate >= this._minQueueRateThreshold) {
-        const key = cand.a_step_from + cand.b_step_from + cand.c_step_from;
-
-        // store in queue using trio key. If new, initialise rates and hits. Else increment hits by 1.
-        if (!queue[key]) {
-          cand.rates = [];
-          cand.hits = 1;
-          queue[key] = cand;
-        } else {
-          queue[key].hits++;
-        }
-        queue[key].rates.push(cand.rate);
-      } else {
-        // 结果按降序排序。
-        // 中断循环，如果这个调用中的其余部分没有超过阈值，那么为什么还要浪费CPU呢？
-        break;
-      }
-    }
-
-    // 在队列的最开始放置最合适的候选
-    if (queue && queue.length > 0) {
-      queue.sort((a: any, b: any) => {
-        return parseInt(b.hits, 10) - parseInt(a.hits, 10);
-      });
-
-      self.candidateQueue = queue;
-      self.emit('queueUpdated', queue);
-      self.processQueue(queue, stream, self.time());
-    }
-
-    return queue;
   }
 
   // 处理队列中的元素

@@ -1,50 +1,61 @@
 import { Trading } from './trading';
-import { PairRanker } from './pair-ranker';
-import { CurrencyCore } from './currency-core';
-import { ICtrl, IStream } from './type';
+// import { CurrencyCore } from './currency-core';
+import { Event } from './event';
+import { logger } from './common';
+import * as types from './type';
 
-export class Bot {
-  // database: Database;
-  pairRanker: PairRanker;
-  ctrl: ICtrl;
-  trading: Trading;
+import { BigNumber } from 'BigNumber.js';
 
-  constructor(ctrl: ICtrl) {
-    // this.database = new Database();
-    this.pairRanker = new PairRanker();
-    this.ctrl = ctrl;
-    this.ctrl.currencyCore = new CurrencyCore(this.ctrl);
-    this.trading = new Trading(this.ctrl.options.trading, this.ctrl.currencyCore, this.ctrl.logger);
-    this.ctrl.storage.streamTick = async (stream: IStream, streamId: string) => {
+const config = require('config');
+
+export class Bot extends Event {
+  // trading: Trading;
+
+  constructor() {
+    super();
+
+    // this.trading = new Trading(this.ctrl.options.trading, this.ctrl.currencyCore, this.ctrl.logger);
+    /*this.ctrl.storage.streamTick = async (stream: IStream, streamId: string) => {
       this.ctrl.storage.streams[streamId] = stream;
 
       if (streamId === 'allMarketTickers') {
         // 运行逻辑来检查套利机会
-        this.ctrl.storage.candidates = this.ctrl.currencyCore.getDynamicCandidatesFromStream(stream, this.ctrl.options.arbitrage);
+        const candidates = this.ctrl.currencyCore.getDynamicCandidatesFromStream(stream, this.ctrl.options.arbitrage);
 
-        // 运行逻辑检查每个交易对排名
-        const pairToTrade = this.pairRanker.getPairRanking(this.ctrl.storage.candidates, this.ctrl.storage.pairRanks, this.ctrl);
-        if (pairToTrade !== 'none' && this.ctrl.storage.trading.active.length === 0) {
+        // 获取排名
+        const rankList = this.getRankList(candidates);
+
+        let isTrading = false;
+        if (rankList.length > 0 && rankList[0].details.netRate && config.minimalProfit) {
+          // 判断是否满足盈利率
+          isTrading = new BigNumber(rankList[0].details.netRate).isGreaterThanOrEqualTo(config.minimalProfit);
+        }
+
+        if (isTrading) {
           // this.ctrl.storage.trading.active.push(pairToTrade);
           // const res = await this.trading.placeOrder(this.ctrl.exchange, pairToTrade);
-          await this.trading.testOrder(this.ctrl.exchange, pairToTrade);
+          // await this.trading.testOrder(this.ctrl.exchange, pairToTrade);
+          this.emit('placeOrder', {});
           // console.log("<----GO TRADE---->");
         }
 
-        // 队列的潜在交易
-        if (this.trading) {
-          this.trading.updateCandidateQueue(stream, this.ctrl.storage.candidates, this.ctrl.storage.trading.queue);
-        }
-
         // 在UI中，为每个交易对更新最新值
-        this.ctrl.UI.updateArbitageOpportunities(this.ctrl.storage.candidates);
+        // this.ctrl.UI.updateArbitageOpportunities(this.ctrl.storage.candidates);
       }
-    };
+    };*/
   }
 
   async start() {
     // 加载CurrencyCore,启动数据流
-    this.ctrl.logger.info('--- 启动交易对数据流');
-    await this.ctrl.currencyCore.start();
+    logger.info('--- 启动交易对数据流');
+    // await this.ctrl.currencyCore.start();
+  }
+
+  // 获取排名
+  getRankList(candidates: types.ICandidte[]) {
+    return candidates.filter((candidte: types.ICandidte) => {
+      // 过滤旧数据
+      return candidte.details.ts > Date.now() - config.rank.pairTimer;
+    });
   }
 }

@@ -1,12 +1,18 @@
+import { Market } from 'ccxt';
+
 export interface ISupportExchange {
   id: string;
   name: string;
 }
 
-export interface IExchangeApi {
-  type: 'public' | 'private';
+export interface IExchange {
   id: ExchangeId;
-  endpoint: any;
+  endpoint: {
+    public?: any;
+    private?: any;
+  };
+  markets?: { [baseCoin: string]: Market[] };
+  pairs?: { [pair: string]: Market };
 }
 
 export enum ExchangeId {

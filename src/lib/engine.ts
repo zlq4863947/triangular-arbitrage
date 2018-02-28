@@ -1,10 +1,10 @@
 import { CurrencySelector } from './currency-selector';
-import { IStreams, IStream, Binance24HrTicker, ICurrency, IArbitrage } from './type';
+// import { IStreams, IStream, Binance24HrTicker, ICurrency, IArbitrage } from './type';
 
-export class CurrencyCore {
+export class Engine {
   currencies: any;
   sockets: any;
-  streams: IStreams;
+  streams: any;
   controller: any;
   selectors: any;
   steps: string[];
@@ -72,19 +72,6 @@ export class CurrencyCore {
     }
     return 0;
   }
-
-  queueTicker(interval: number) {
-    const that = this;
-    if (!interval) {
-      interval = 3000;
-    }
-    setTimeout(() => {
-      that.queueTicker(interval);
-    }, interval);
-    that.tick();
-  }
-
-  tick() {}
 
   getCurrencyFromStream(stream: IStream, fromCur: string, toCur: string) {
     if (!stream || !fromCur || !toCur) {
