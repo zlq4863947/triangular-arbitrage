@@ -1,16 +1,8 @@
-export interface ITradeInfo {
-  pair: string;
-  side: 'SELL' | 'BUY';
-  type: string;
-  quantity: number;
-}
+import { Ticker } from 'ccxt';
 
-export interface ICoin {
-  flipped: boolean;
-  rate: number;
-  stepFrom: string;
-  stepTo: string;
-  tradeInfo: ITradeInfo;
+export interface ITicker extends Ticker {
+  askVolume: number;
+  bidVolume: number;
 }
 
 /**
@@ -20,12 +12,14 @@ export interface IEdge {
   pair: string;
   coinFrom: string;
   coinTo: string;
-  // 买价
-  askPrice: string;
-  askQuantity: string;
-  // 卖价
-  bidPrice: string;
-  bidQuantity: string;
+  // 交易方向
+  side: 'SELL' | 'BUY';
+  // 最佳价格
+  price: number;
+  // 最佳数量
+  quantity: number;
+  // 兑换率
+  conversionRate: number;
 }
 
 /**
@@ -37,6 +31,8 @@ export interface ITriangle {
   c: IEdge;
   // 净利率
   netRate: number;
+  // 盈利率
+  profitRate: number;
   // 时间戳
   ts: number;
 }

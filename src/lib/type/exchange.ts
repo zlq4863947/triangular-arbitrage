@@ -1,4 +1,6 @@
-import { Market } from 'ccxt';
+import { Market as IMarket } from 'ccxt';
+
+export { IMarket };
 
 export interface ISupportExchange {
   id: string;
@@ -11,8 +13,8 @@ export interface IExchange {
     public?: any;
     private?: any;
   };
-  markets?: { [baseCoin: string]: Market[] };
-  pairs?: { [pair: string]: Market };
+  markets?: { [baseCoin: string]: IMarket[] };
+  pairs?: { [pair: string]: IMarket };
 }
 
 export enum ExchangeId {

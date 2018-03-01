@@ -24,6 +24,10 @@
 ### 三角套利相关配置
 ###
 [arbitrage]
+  # 套利监视间隔(秒)
+  interval = 1
+  # 最小盈利率
+  minRateProfit = 1.02
   # 起点
   start = "BTC"
   # 匹配基准
@@ -34,8 +38,6 @@
 ### 排名计算配置
 ###
 [rank]
-  # 最小盈利率
-  minRateProfit = 1.02
   # 数据过滤时间，默认15分钟（秒）
   pairTimer = 900000
 
@@ -45,9 +47,9 @@
 ###
 [trading]
   # 只有超过 x% 最小盈利率(minimalProfit)的候选人,排队等待交易
-  minQueueRateThreshold = 3
+  # minQueueRateThreshold = 3
   # 有多少相同机会的阈值
-  minHitsThreshold = 5
+  # minHitsThreshold = 5
 
 ###
 ### [account]
@@ -63,10 +65,8 @@
   # binance
   [account.binance]
     # 账号
-    # apiKey = "xx"
-    # secret = "cc"
-    apiKey = "ss"
-    secret = "zz"
+    apiKey = "zzz"
+    secret = "ccc"
 
   # bitbank
   [account.bitbank]

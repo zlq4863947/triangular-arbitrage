@@ -1,14 +1,8 @@
 import { CurrencySelector } from './currency-selector';
-// import { IStreams, IStream, Binance24HrTicker, ICurrency, IArbitrage } from './type';
+import * as types from './type';
+import { IEdge, ITriangle } from './type';
 
 export class Engine {
-  currencies: any;
-  sockets: any;
-  streams: any;
-  controller: any;
-  selectors: any;
-  steps: string[];
-  exchangeInfo: any;
 
   // 每秒触发一次, 所有来自 Binance 的ticker数据
   events = {
@@ -39,26 +33,6 @@ export class Engine {
     },
   };
 
-  constructor(ctrl: any) {
-    if (!ctrl.exchange) {
-      throw new Error('未定义的交易所连接器。 将无法与交易所API进行通信。');
-    }
-
-    // Stores
-    this.currencies = {};
-    this.sockets = {};
-    this.streams = {};
-    this.controller = ctrl;
-    this.steps = ['BTC', 'ETH', 'BNB', 'USDT'];
-  }
-
-  async start() {
-    // CurrencyCore.startWSockets(exchange, ctrl);
-    this.exchangeInfo = await this.controller.exchange.exchangeInfo();
-    this.startAllTickerStream(this.controller.exchange);
-    // this.queueTicker(5000);
-  }
-
   getDecimalsNum(pair: string) {
     const symbol = this.exchangeInfo.symbols.find((o: any) => o.symbol === pair);
     if (symbol) {
@@ -73,196 +47,138 @@ export class Engine {
     return 0;
   }
 
-  getCurrencyFromStream(stream: IStream, fromCur: string, toCur: string) {
-    if (!stream || !fromCur || !toCur) {
+  // 获取组合的边
+  getEdge(tickers: types.ITicker[], coinFrom: string, coinTo: string) {
+    if (tickers.length === 0 || !coinFrom || !coinTo) {
       return;
     }
 
-    /*
-     Binance使用xxxBTC表示法。 如果我们正在考虑xxxBTC，并且我们希望从BTC到xxx，那意味着我们正在购买，反之亦然。
-    */
-    let currency: ICurrency = Object.assign(<ICurrency>{}, stream.obj[toCur + fromCur]);
-    if (currency && Object.keys(currency).length > 0) {
-      // found a match using reversed binance syntax,
-      // meaning we're buying if we're going from->to (btc->xxx in xxxBTC ticker)
-      // using a fromCurtoCur ticker.
-      currency.flipped = false;
-      currency.rate = +currency.a;
+    // 查找匹配的ticker
+    const buyTicker = tickers.find((t: types.ITicker) => {
+      return t.symbol === coinTo + '/' + coinFrom;
+    });
 
-      // BNBBTC
-      // ask == trying to buy
+    const edge = <types.IEdge>{ coinFrom, coinTo };
+    if (buyTicker) {
+      edge.pair = buyTicker.symbol;
+      edge.side = 'BUY';
+      edge.price = edge.conversionRate = buyTicker.ask;
+      edge.quantity = buyTicker.askVolume;
     } else {
-      currency = Object.assign(<ICurrency>{}, stream.obj[fromCur + toCur]);
-      if (!currency || Object.keys(currency).length === 0) {
+      // 查找匹配的ticker
+      const sellTicker = tickers.find((t: types.ITicker) => {
+        return t.symbol === coinFrom + '/' + coinTo;
+      });
+      if (!sellTicker) {
         return;
       }
-      currency.flipped = true;
-      currency.rate = 1 / +currency.b;
-
-      // BTCBNB
-      // bid == im trying to sell.
+      edge.pair = sellTicker.symbol;
+      edge.side = 'SELL';
+      edge.price = sellTicker.bid;
+      edge.quantity = sellTicker.bidVolume;
+      edge.conversionRate = 1 / sellTicker.bid;
     }
-    currency.stepFrom = fromCur;
-    currency.stepTo = toCur;
 
-    currency.tradeInfo = {
-      symbol: currency.s,
-      side: currency.flipped === true ? 'SELL' : 'BUY',
-      type: 'MARKET',
-      quantity: 1,
-    };
-    // console.log('getCurrencyFromStream: from/to: ', currency.stepFrom, currency.stepTo);
-
-    return currency;
+    return edge;
   }
 
-  getArbitageRate(stream: any, step1: string, step2: string, step3: string) {
-    if (!stream || !step1 || !step2 || !step3) {
+  // 获取三角套利信息
+  private getTriangle(tickers: types.ITicker[], abc: { a: string, b: string, c: string }) {
+    if (tickers.length === 0 || !abc || !abc.a || !abc.b || !abc.c) {
       return;
     }
-    const ret = {
-      a: this.getCurrencyFromStream(stream, step1, step2),
-      b: this.getCurrencyFromStream(stream, step2, step3),
-      c: this.getCurrencyFromStream(stream, step3, step1),
-      rate: 0,
+    const a = this.getEdge(tickers, abc.a, abc.b);
+    const b = this.getEdge(tickers, abc.b, abc.c);
+    const c = this.getEdge(tickers, abc.c, abc.a);
+    if (!a || !b || !c) {
+      return;
+    }
+    const netRate = a.conversionRate * b.conversionRate * c.conversionRate;
+    return <types.ITriangle>{
+      a, b, c,
+      netRate,
+      profitRate: netRate - netRate * 0.1,
+      ts: Date.now(),
     };
-
-    if (!ret.a || !ret.b || !ret.c) {
-      return;
-    }
-
-    ret.rate = ret.a.rate * ret.b.rate * ret.c.rate;
-    return ret;
   }
 
-  getCandidatesFromStreamViaPath(stream: IStream, aPair: string, bPair: string) {
-    const keys = {
-      a: aPair.toUpperCase(),
-      b: bPair.toUpperCase(),
+  private findCandidates(exchange: types.IExchange, tickers: types.ITicker[], aCoinfrom: string, aCoinTo: string) {
+    if (!exchange.markets) {
+      return;
+    }
+    const abc = {
+      a: aCoinfrom.toUpperCase(),
+      b: aCoinTo.toUpperCase(),
       c: 'findme'.toUpperCase(),
     };
 
-    const apairs = stream.markets[keys.a];
-    const bpairs = stream.markets[keys.b];
+    const aPairs = exchange.markets[abc.a];
+    const bPairs = exchange.markets[abc.b];
 
-    const akeys: { [attr: string]: any } = {};
-    apairs.map((obj: Binance24HrTicker, i: number, array: Binance24HrTicker[]) => {
-      akeys[obj.s.replace(keys.a, '')] = obj;
+    const aCoinToSet: { [coin: string]: types.IMarket } = {};
+    aPairs.map((market: types.IMarket) => {
+      aCoinToSet[market.quote] = market;
     });
 
-    // 避免 1-steps
-    delete akeys[keys.b];
+    // 去掉b点coin
+    delete aCoinToSet[abc.b];
 
     /*
-      Loop through BPairs
-        for each bpair key, check if apair has it too.
-        If it does, run arbitrage math
+      通过BPair配对
     */
-    const bmatches = [];
-    for (let i = 0; i < bpairs.length; i++) {
-      const bPairTicker = bpairs[i];
-      bPairTicker.key = bPairTicker.s.replace(keys.b, '');
+    const triangles: ITriangle[] = [];
+    for (let i = 0; i < bPairs.length; i++) {
+      const bPairMarket = bPairs[i];
 
-      // from B to C
-      bPairTicker.startsWithKey = bPairTicker.s.startsWith(keys.b);
+      if (aCoinToSet[bPairMarket.quote]) {
 
-      // from C to B
-      bPairTicker.endsWithKey = bPairTicker.s.endsWith(keys.b);
+        const stepC = this.getEdge(tickers, bPairMarket.quote, abc.a);
 
-      if (akeys[bPairTicker.key]) {
-        const match = bPairTicker;
-        // check price from bPairTicker.key to keys.a
-
-        const stepC = this.getCurrencyFromStream(stream, match.key, keys.a);
-
-        // 如果我们确实找到了一条路一些路径是不可能的, 因此将导致一个空的 stepC 报价。
+        // 匹配到路径C
         if (stepC) {
-          keys.c = match.key;
+          abc.c = stepC.coinFrom;
 
-          const comparison = this.getArbitageRate(stream, keys.a, keys.b, keys.c);
-
-          if (comparison && comparison.a && comparison.b && comparison.c) {
-            // console.log('getCandidatesFromStreamViaPath: from/to a: ', comparison.a.stepFrom, comparison.a.stepTo);
-            // console.log('getCandidatesFromStreamViaPath: from/to b: ', comparison.b.stepFrom, comparison.b.stepTo);
-            // console.log('getCandidatesFromStreamViaPath: from/to c: ', comparison.c.stepFrom, comparison.c.stepTo);
-
-            const dt = new Date();
-            const triangle = {
-              ts: +dt,
-              dt: dt,
-              ws_ts: comparison.a.E,
-              // these are for storage later
-              a: comparison.a, // full ticker for first pair (BTC->BNB)
-              a_symbol: comparison.a.s,
-              a_step_from: comparison.a.stepFrom, // btc
-              a_step_to: comparison.a.stepTo, // bnb
-              a_step_type: comparison.a.tradeInfo.side,
-              a_bid_price: comparison.a.b,
-              a_bid_quantity: comparison.a.B,
-              a_ask_price: comparison.a.a,
-              a_ask_quantity: comparison.a.A,
-              a_volume: comparison.a.v,
-              a_trades: comparison.a.n,
-
-              b: comparison.b, // full ticker for second pair (BNB->XMR)
-              b_symbol: comparison.b.s,
-              b_step_from: comparison.b.stepFrom, // bnb
-              b_step_to: comparison.b.stepTo, // xmr
-              b_step_type: comparison.b.tradeInfo.side,
-              b_bid_price: comparison.b.b,
-              b_bid_quantity: comparison.b.B,
-              b_ask_price: comparison.b.a,
-              b_ask_quantity: comparison.b.A,
-              b_volume: comparison.b.v,
-              b_trades: comparison.b.n,
-              c: comparison.c, // full ticker for third pair (XMR->BTC)
-              c_symbol: comparison.c.s,
-              c_step_from: comparison.c.stepFrom, // xmr
-              c_step_to: comparison.c.stepTo, // btc
-              c_step_type: comparison.c.tradeInfo.side,
-              c_bid_price: comparison.c.b,
-              c_bid_quantity: comparison.c.B,
-              c_ask_price: comparison.c.a,
-              c_ask_quantity: comparison.c.A,
-              c_volume: comparison.c.v,
-              c_trades: comparison.c.n,
-              rate: comparison.rate,
-            };
-            bmatches.push(triangle);
-
-            // console.log('getCandidatesFromStreamViaPath: from/to a: ', triangle.a_step_from, triangle.a_step_to);
-            // console.log('getCandidatesFromStreamViaPath: from/to b: ', triangle.b_step_from, triangle.b_step_to);
-            // console.log('getCandidatesFromStreamViaPath: from/to c: ', triangle.c_step_from, triangle.c_step_to);
+          const triangle = this.getTriangle(tickers, abc);
+          if (!triangle) {
+            continue;
           }
+
+          triangles.push(triangle);
         }
       }
     }
 
-    if (bmatches.length) {
-      bmatches.sort((a, b) => {
-        return parseFloat(b.rate + '') - parseFloat(a.rate + '');
+    if (triangles.length) {
+      triangles.sort((a, b) => {
+        return b.netRate - a.netRate;
       });
     }
 
-    return bmatches;
+    return triangles;
   }
 
-  getDynamicCandidatesFromStream(stream: IStream, options: IArbitrage) {
-    let matches: any[] = [];
-
-    for (let i = 0; i < options.paths.length; i++) {
-      const pMatches = this.getCandidatesFromStreamViaPath(stream, options.start, options.paths[i]);
-      matches = matches.concat(pMatches);
-      // console.log("adding: " + pMatches.length + " to : " + matches.length);
+  async getCandidates(exchange: types.IExchange, options: types.IArbitrageOptions) {
+    let candidates: types.ITriangle[] = [];
+    const paths = [options.arbitrage.start].concat(options.arbitrage.baseCoins);
+    const api = exchange.endpoint.public || exchange.endpoint.private;
+    if (!api || paths.length === 0) {
+      return;
+    }
+    const tickers = await api.fetchTickers();
+    for (const path of paths) {
+      const foundCandidates = this.findCandidates(exchange, tickers, options.arbitrage.start, path) ；
+      if (foundCandidates && foundCandidates.length > 0) {
+        candidates = candidates.concat(foundCandidates);
+      }
     }
 
-    if (matches.length) {
-      matches.sort(function(a, b) {
-        return parseFloat(b.rate) - parseFloat(a.rate);
+    if (candidates.length) {
+      candidates.sort((a, b) => {
+        return b.netRate - a.netRate;
       });
     }
 
-    return matches;
+    return candidates;
   }
 
   /*
@@ -322,7 +238,7 @@ export class Engine {
     }
 
     if (bmatches.length) {
-      bmatches.sort(function(a, b) {
+      bmatches.sort(function (a, b) {
         return parseFloat(String(b.rate)) - parseFloat(String(a.rate));
       });
     }
@@ -377,5 +293,13 @@ export class Engine {
       this.currencies[selector.key].handleEvent = ctrl.events.wsEvent;
       this.currencies[selector.key].startWSockets(ctrl.events);
     }
+  }
+
+  // 获取排名
+  getRankList(candidates: types.ICandidte[], timeout: number) {
+    return candidates.filter((candidte: types.ICandidte) => {
+      // 过滤旧数据
+      return candidte.details.ts > Date.now() - timeout;
+    });
   }
 }

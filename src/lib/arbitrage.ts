@@ -1,12 +1,11 @@
 import { logger, Helper } from './common';
-import { Bot } from './bot';
 import { UI } from './ui';
 import { Event } from './event';
 // import { CurrencyCore } from './currency-core';
 import * as assert from 'power-assert';
-import { EventEmitter } from 'events';
 import * as types from './type';
 import { Market } from 'ccxt';
+import { Engine } from './engine';
 
 const config = require('config');
 
@@ -14,11 +13,16 @@ export class TriangularArbitrage extends Event {
   exchanges: Map<string, types.IExchange> = new Map();
   options: types.IArbitrageOptions;
   activeExchange: types.ExchangeId;
+  // 机器人id
+  worker: number = 0;
+  // 匹配引擎
+  engine: Engine;
 
   constructor() {
     super();
     this.options = config;
     this.activeExchange = <types.ExchangeId>this.options.exchange.active;
+    this.engine = new Engine();
   }
 
   async start(activeExchange?: types.ExchangeId) {
@@ -29,9 +33,8 @@ export class TriangularArbitrage extends Event {
 
     try {
       // 初始化交易所
-      this.initExchange(this.activeExchange);
-      // 初始化市场
-      this.initMarket();
+      await this.initExchange(this.activeExchange);
+      this.worker = setInterval(this.estimate.bind(this), this.options.arbitrage.interval);
 
       logger.info('----- 机器人启动完成 -----');
     } catch (err) {
@@ -39,41 +42,61 @@ export class TriangularArbitrage extends Event {
     }
   }
 
-  initExchange(activeExchange: types.ExchangeId) {
-    // 查看是否已初始化api
-    if (this.exchanges.get(activeExchange)) {
-      return;
-    }
-
-    const api = Helper.getExchange(activeExchange);
-    if (api) {
-      this.exchanges.set(activeExchange, api);
-    }
+  destroy() {
+    clearInterval(this.worker);
   }
 
-  initMarket() {
-    if (this.exchanges.size === 0) {
+  private async initExchange(exchangeId: types.ExchangeId) {
+    // 查看是否已初始化api
+    if (this.exchanges.get(exchangeId)) {
       return;
     }
-    this.exchanges.forEach(async (exchange: types.IExchange) => {
-      if (exchange && exchange.endpoint.public) {
-        const api = exchange.endpoint.public;
-        exchange.pairs = await api.loadMarkets();
-        if (!exchange.pairs) {
-          return;
-        }
-        if (exchange.id === types.ExchangeId.Binance) {
-          const baseCoins = [this.options.arbitrage.start].concat(this.options.arbitrage.baseCoins);
-          for (const baseCoin of baseCoins) {
-            let pairKeys = Object.keys(exchange.pairs);
-            pairKeys = pairKeys.filter((pair: string) => pair.includes(baseCoin));
-            exchange.markets = {};
-            for (const key of pairKeys) {
-              exchange.markets[baseCoin].push(exchange.pairs[key]);
-            }
+
+    const exchange = Helper.getExchange(exchangeId);
+    if (!exchange) {
+      return;
+    }
+    const api = exchange.endpoint.public || exchange.endpoint.private;
+    if (api) {
+      exchange.pairs = await api.loadMarkets();
+      if (!exchange.pairs) {
+        return;
+      }
+      const markets: {
+        [coin: string]: Market[];
+      } = {};
+      if (exchange.id === types.ExchangeId.Binance) {
+        const baseCoins = [this.options.arbitrage.start].concat(this.options.arbitrage.baseCoins);
+        for (const baseCoin of baseCoins) {
+          if (!markets[baseCoin]) {
+            markets[baseCoin] = [];
           }
+          const pairKeys = Object.keys(exchange.pairs).filter((pair: string) => pair.includes(baseCoin));
+          for (const key of pairKeys) {
+            markets[baseCoin].push(exchange.pairs[key]);
+          }
+          exchange.markets = markets;
         }
       }
-    });
+    }
+    this.exchanges.set(exchangeId, exchange);
+  }
+
+  // 测算
+  async estimate() {
+    const exchange = this.exchanges.get(this.activeExchange);
+    if (!exchange) {
+      return;
+    }
+    // 匹配候选者
+    const candidates = await this.engine.getCandidates(exchange, this.options);
+    if (!candidates) {
+      return;
+    }
+    const champion = candidates[0];
+    if (champion.profitRate > this.options.arbitrage.minRateProfit) {
+      // 执行三角套利
+      this.emit('placeOrder', champion);
+    }
   }
 }

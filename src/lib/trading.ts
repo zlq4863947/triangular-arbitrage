@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
 // import { CurrencyCore } from './currency-core';
-import { ITradeInfo } from './type';
+import * as types from './type';
 
-export class Trading extends EventEmitter {
+export class Trading {
   logger: any;
   _started: number;
   _minQueueRateThreshold: number;
@@ -13,22 +13,6 @@ export class Trading extends EventEmitter {
   _worker: number;
   _first: number;
   _last: number;
-
-  constructor(opts: any, currencyCore: any, logger: any) {
-    super();
-
-    if (!(this instanceof Trading)) {
-      return new Trading(opts, currencyCore, logger);
-    }
-
-    this._started = Date.now();
-    // 最小队列百分比阈值
-    this._minQueueRateThreshold = opts.minQueueRateThreshold ? opts.minQueueRateThreshold / 100 + 1 : 0;
-    this._minHitsThreshold = opts.minHitsThreshold ? opts.minHitsThreshold : 0;
-    this._currencyCore = currencyCore;
-    this._activeTrades = {};
-    this.logger = logger;
-  }
 
   // 处理队列中的元素
   processQueue(queue: any, stream: any, time: number) {
@@ -76,8 +60,12 @@ export class Trading extends EventEmitter {
   }
 
   // 下单
-  async placeOrder(api: any, pairToTrade: any) {
+  async placeOrder(exchange: types.IExchange, triangle: types.ITriangle) {
     // this.logger.info(`pairToTrade: ${JSON.stringify(pairToTrade, null, 2)}`);
+    const api = exchange.endpoint.private;
+    if (!api) {
+      return;
+    }
 
     try {
       // 查询资产
@@ -86,7 +74,7 @@ export class Trading extends EventEmitter {
         return;
       }
       const btcAsset = (<Array<any>>account.balances).find((o: any, index: number, arr: any[]) => {
-        return o.asset === pairToTrade.a_step_from;
+        return o.asset === triangle.a.coinFrom;
       });
       if (!btcAsset) {
         return;

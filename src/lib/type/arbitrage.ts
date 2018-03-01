@@ -8,11 +8,12 @@ export interface IArbitrageOptions {
     active: string;
   };
   arbitrage: {
+    interval: number;
+    minRateProfit: number;
     start: string;
     baseCoins: string[];
   };
   rank: {
-    minRateProfit: number;
     pairTimer: number;
   };
   trading: {
