@@ -14,7 +14,7 @@ export class TriangularArbitrage extends Event {
   options: types.IArbitrageOptions;
   activeExchange: types.ExchangeId;
   // 机器人id
-  worker: number = 0;
+  worker = 0;
   // 匹配引擎
   engine: Engine;
 
