@@ -12,9 +12,18 @@ export interface IExchange {
   endpoint: {
     public?: any;
     private?: any;
+    ws?: any;
   };
-  markets?: { [baseCoin: string]: IMarket[] };
-  pairs?: { [pair: string]: IMarket };
+  markets?: IMarkets;
+  pairs?: IPairs;
+}
+
+export interface IMarkets {
+  [baseCoin: string]: IMarket[]
+}
+
+export interface IPairs {
+  [pair: string]: IMarket
 }
 
 export enum ExchangeId {

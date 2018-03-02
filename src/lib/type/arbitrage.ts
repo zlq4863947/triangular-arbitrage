@@ -24,3 +24,7 @@ export interface IArbitrageOptions {
     [exchange: string]: ICredentials;
   };
 }
+
+export interface IEngineOptions {
+  limit: number;
+}

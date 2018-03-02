@@ -5,6 +5,10 @@ export interface ITicker extends Ticker {
   bidVolume: number;
 }
 
+export interface ITickers {
+  [pair: string]: ITicker;
+}
+
 /**
  * 三角组合的边
  */
@@ -26,6 +30,8 @@ export interface IEdge {
  * 三角组合
  */
 export interface ITriangle {
+  // 三角组合唯一id（例:btc-bnb-bcd）
+  id: string;
   a: IEdge;
   b: IEdge;
   c: IEdge;

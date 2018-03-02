@@ -6,7 +6,7 @@
 ### 画面配置
 ###
 [display]
-  # 画面输出最大行数
+  # 显示的最大组合数
   maxRows = 40 
 
 ###
@@ -32,14 +32,6 @@
   start = "BTC"
   # 匹配基准
   baseCoins = ["BNB", "ETH", "USDT"]
-
-###
-### [rank]
-### 排名计算配置
-###
-[rank]
-  # 数据过滤时间，默认15分钟（秒）
-  pairTimer = 900000
 
 ###
 ### [trading]
