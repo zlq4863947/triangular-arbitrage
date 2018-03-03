@@ -1,58 +1,85 @@
 # 配置文件
 
 ###
+### [display]
+### 
 ### 画面配置
 ###
-
-# 画面输出最大行数
-maxRows = 40 
-
-###
-### 交易所配置
-###
-
-# 我们连接到哪个交易所？ 当前只支持Binance。
-activeExchange = "binance"
-
-#### Binance REST 设置
-### 用于控制和检查订单
-restTimeout = 15000
-restRecvWindow = 10000
-restBeautify = false
-
-#### 这些事我们可以通过的三角套利路径
-### 起点
-binanceStartingPoint = "BTC"
-
-### 可以套利的基准货币
-binanceColumns = ["BNB", "ETH", "USDT"]
+[display]
+  # 画面输出最大行数
+  maxRows = 40 
 
 ###
-### 排名计算配置
+### [exchange]
+### 
+### 交易所相关配置
 ###
-
-# 最小盈利率
-minimalProfit = 1.02
-# 数据过滤时间，默认15分钟（秒）
-pairTimer = 900000
+[exchange]
+  # 初始默认交易所[kucoin/binance/bitbank], 之后可以通过参数变更
+  active = "binance"
 
 ###
+### [arbitrage]
+### 
+### 三角套利相关配置
+###
+[arbitrage]
+  # 套利监视间隔(秒)
+  # 币安时无视此项，tickers取得间隔固定（1秒）
+  interval = 1
+  # 最小盈利率
+  minRateProfit = 0.02
+  # 起点
+  start = "BTC"
+  # 匹配基准
+  baseCoins = ["BNB", "ETH", "USDT"]
+
+###
+### [log]
+### 日志配置
+###
+[log]
+  # 是否开启debug信息
+  debug = false
+
+###
+### [storage]
+### 存储配置
+###
+[storage]
+  # PouchDB数据库URL(没有可以填空字符串)
+  url = "http://localhost:5984"
+  #url = ""
+
+###
+### [trading]
+### 交易相关配置
+###
+[trading]
+  # 只有超过 x% 最小盈利率(minimalProfit)的候选人,排队等待交易
+  # minQueueRateThreshold = 3
+  # 有多少相同机会的阈值
+  # minHitsThreshold = 5
+
+###
+### [account]
 ### 账户相关配置
+### apiKey与secret在获取行情api中并不是必须项目，只有交易相关api中为必须项目
 ###
+[account]
+  # 库币 
+  [account.kucoin]
+    apiKey = "c"
+    secret = "x"
 
-# 库币 
-[kucoin]
-  apiKey = "c"
-  secret = "x"
+  # binance
+  [account.binance]
+    # 账号
+    apiKey = "zz"
+    secret = "cc"
 
-# binance
-[binance]
-  # 账号
-  apiKey = "xxz"
-  secret = "cx"
-
-# bitbank.cc 
-[bitbankcc]
-  # 账号
-  apiKey = "1K"
-  secret = "f3"
+  # bitbank
+  [account.bitbank]
+    # 账号
+    apiKey = "1K"
+    secret = "f3"

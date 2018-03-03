@@ -3,7 +3,7 @@ angular.module('pubSub', [])
 
     var socket = io(); // connect to the socket on this server
     socket.on('updateArbitage', function (data) { // whenever server send 'updateArbitage'
-      $scope.tickers = data; // update
+      $scope.ranks = data; // update
       $scope.$apply(); // send to frontend
     });
   });
