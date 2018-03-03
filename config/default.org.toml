@@ -25,9 +25,10 @@
 ###
 [arbitrage]
   # 套利监视间隔(秒)
+  # 币安时无视此项，tickers取得间隔固定（1秒）
   interval = 1
   # 最小盈利率
-  minRateProfit = 1.02
+  minRateProfit = 0.02
   # 起点
   start = "BTC"
   # 匹配基准
@@ -39,7 +40,7 @@
 ###
 [log]
   # 是否开启debug信息
-  debug = true
+  debug = false
 
 ###
 ### [storage]
@@ -48,6 +49,7 @@
 [storage]
   # PouchDB数据库URL(没有可以填空字符串)
   url = "http://localhost:5984"
+  #url = ""
 
 ###
 ### [trading]
@@ -73,8 +75,8 @@
   # binance
   [account.binance]
     # 账号
-    apiKey = "xxx"
-    secret = "xx"
+    apiKey = "zz"
+    secret = "cc"
 
   # bitbank
   [account.bitbank]
