@@ -1,4 +1,5 @@
 import * as types from '../type';
+import { BigNumber } from 'BigNumber.js';
 
 const ccxt = require('ccxt');
 const config = require('config');
@@ -66,6 +67,34 @@ export class Helper {
       }
     }
     return allTickers;
+  }
+
+  /**
+   * 获取排行数据
+   * @param triangles 三角套利数组
+   */
+  static getRanks(triangles: types.ITriangle[]) {
+    const ranks: types.IRank[] = [];
+    triangles.reduce((pre, tri) => {
+      const fee = [
+        tri.netRate * 0.1,
+        tri.netRate * 0.05
+      ]
+      const profitRate = [
+        tri.netRate - fee[0],
+        tri.netRate - fee[1]
+      ]
+      const rank: types.IRank = {
+        stepA: tri.a.coinFrom,
+        stepB: tri.b.coinFrom,
+        stepC: tri.c.coinFrom,
+        rate: (tri.netRate - 1) * 100,
+        fee,
+        profitRate
+      };
+      ranks.push(rank)
+    }, <any>{});
+    return ranks;
   }
 
   static getTimer() {

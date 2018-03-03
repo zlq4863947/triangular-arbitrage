@@ -1,4 +1,5 @@
 import * as types from './type';
+import { logger, Helper } from './common';
 
 export class Engine {
   limit: number;
@@ -34,7 +35,6 @@ export class Engine {
       edge.quantity = sellTicker.bidVolume;
       edge.conversionRate = 1 / sellTicker.bid;
     }
-
     return edge;
   }
 
@@ -115,6 +115,9 @@ export class Engine {
     if (!api || paths.length === 0) {
       return;
     }
+    const timer = Helper.getTimer();
+    logger.debug('getCandidates:获取全市场候选者[开始]');
+
     for (const path of options.arbitrage.baseCoins) {
       const foundCandidates = this.findCandidates(exchange, tickers, options.arbitrage.start, path);
       if (foundCandidates && foundCandidates.length > 0) {
@@ -132,6 +135,7 @@ export class Engine {
       candidates = candidates.slice(0, this.limit);
     }
 
+    logger.debug(`getCandidates:获取全市场候选者[终了] ${Helper.endTimer(timer)}`);
     return candidates;
   }
 }

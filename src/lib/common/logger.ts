@@ -1,4 +1,5 @@
 const moment = require('moment');
+const config = require('config');
 import * as fs from 'fs';
 
 // 准备日志
@@ -16,6 +17,34 @@ const tsFormat = () => moment().format();
 const myFormat = printf((info: any) => {
   return `${info.timestamp} [${info.level}] ${info.message}`;
 });
+let myTransports = [
+  // 将输出着色到控制台
+  new transports.File({
+    filename: `${logDir}/error.log`,
+    level: 'error',
+  }),
+  new transports.File({
+    filename: `${logDir}/combined.log`,
+    level: 'info',
+  }),
+  new transports.Console({
+    format: combine(colorize(), myFormat),
+    level: 'info',
+  }),
+];
+
+if (config.log.debug) {
+  myTransports = myTransports.concat([
+    new transports.File({
+      filename: `${logDir}/debug.log`,
+      level: 'debug',
+    }),
+    new transports.Console({
+      format: combine(colorize(), myFormat),
+      level: 'debug',
+    }),
+  ])
+}
 
 export const logger = createLogger({
   format: combine(
@@ -25,27 +54,5 @@ export const logger = createLogger({
     }),
     myFormat,
   ),
-  transports: [
-    // 将输出着色到控制台
-    new transports.File({
-      filename: `${logDir}/error.log`,
-      level: 'error',
-    }),
-    new transports.File({
-      filename: `${logDir}/debug.log`,
-      level: 'debug',
-    }),
-    new transports.Console({
-      format: combine(colorize(), myFormat),
-      level: 'debug',
-    }),
-    new transports.File({
-      filename: `${logDir}/combined.log`,
-      level: 'info',
-    }),
-    new transports.Console({
-      format: combine(colorize(), myFormat),
-      level: 'info',
-    }),
-  ],
+  transports: myTransports,
 });

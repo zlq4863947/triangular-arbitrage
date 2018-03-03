@@ -13,8 +13,8 @@ export interface IArbitrageOptions {
     start: string;
     baseCoins: string[];
   };
-  rank: {
-    pairTimer: number;
+  log: {
+    debug: boolean;
   };
   trading: {
     minQueueRateThreshold: number;

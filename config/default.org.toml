@@ -6,7 +6,7 @@
 ### 画面配置
 ###
 [display]
-  # 显示的最大组合数
+  # 画面输出最大行数
   maxRows = 40 
 
 ###
@@ -34,6 +34,22 @@
   baseCoins = ["BNB", "ETH", "USDT"]
 
 ###
+### [log]
+### 日志配置
+###
+[log]
+  # 是否开启debug信息
+  debug = true
+
+###
+### [storage]
+### 存储配置
+###
+[storage]
+  # PouchDB数据库URL(没有可以填空字符串)
+  url = "http://localhost:5984"
+
+###
 ### [trading]
 ### 交易相关配置
 ###
@@ -57,8 +73,8 @@
   # binance
   [account.binance]
     # 账号
-    apiKey = "zzz"
-    secret = "ccc"
+    apiKey = "xxx"
+    secret = "xx"
 
   # bitbank
   [account.bitbank]

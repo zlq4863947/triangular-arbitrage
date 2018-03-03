@@ -26,22 +26,22 @@
             <th>Step B</th>
             <th>Step C</th>
             <th>Rate</th>
-            <th>BnB手续费</th>
-            <th>(Rate - BnB手续费)</th>
             <th>正常手续费</th>
             <th>(Rate - 手续费)</th>
+            <th>BnB手续费</th>
+            <th>(Rate - BnB手续费)</th>
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="(index,ticker) in tickers">
-            <td>{{ticker.a.key}}</td>
-            <td>{{ticker.b.stepFrom}}</td>
-            <td>{{ticker.c.stepFrom}}</td>
-            <td style="font: caption;">{{ticker.n_rate.toFixed(3).toString() + '%'}}</td>
-            <td style="font: caption;">{{ticker.n_fees1.toFixed(3).toString() + '%'}}</td>
-            <td style="font: caption;">{{ticker.n_fRate1.toFixed(3).toString() + '%'}}</td>
-            <td style="font: caption;">{{ticker.n_fees2.toFixed(3).toString() + '%'}}</td>
-            <td style="font: caption;">{{ticker.n_fRate2.toFixed(3).toString() + '%'}}</td>
+          <tr ng-repeat="(index,rank) in ranks">
+            <td>{{rank.stepA}}</td>
+            <td>{{rank.stepB}}</td>
+            <td>{{rank.stepC}}</td>
+            <td style="font: caption;">{{rank.rate.toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{rank.fee[0].toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{rank.profitRate[0].toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{rank.fee[1].toFixed(3).toString() + '%'}}</td>
+            <td style="font: caption;">{{rank.profitRate[1].toFixed(3).toString() + '%'}}</td>
           </tr>
         </tbody>
     </div>

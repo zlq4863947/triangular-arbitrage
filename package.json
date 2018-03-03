@@ -13,11 +13,12 @@
     "rm": "rimraf dist",
     "format": "prettier --config .prettierrc --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "tsc": "npm run rm && tsc -p tsconfig.development.json",
-    "start": "npm run prepare && node dist/src/lib/start.js",
-    "start:dev": "node dist/src/lib/start.js",
+    "start": "npm run prepare && node dist/src/lib/bin/start.js",
+    "start:dev": "node dist/src/lib/bin/start.js",
+    "ws": "node dist/src/lib/bin/ws.js",
     "tslint": "tslint --project ./tslint.json",
     "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
-    "test:m": "cross-env NODE_ENV=test mocha dist/**/engine.test.js --timeout 5000 --require intelli-espower-loader",
+    "test:m": "cross-env NODE_ENV=test mocha dist/**/storage.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
