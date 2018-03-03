@@ -20,8 +20,9 @@ const testPutDb = async () => {
       'lookin hella cute'
     ]
   };
-
-  const res = await storage.pouchDB.put(doc)
+  const res = await storage.removeAllDocs()
+  console.log(res)
+  // const res = await storage.pouchDB.put(doc)
   // console.log('res: ', res)
   /* const info = await movies.info();
   console.log(info)

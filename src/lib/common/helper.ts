@@ -21,9 +21,17 @@ export class Helper {
     switch (exchange) {
       case types.ExchangeId.KuCoin:
       case types.ExchangeId.Binance:
-        let ws;
+        let ws, rest;
         if (exchange === types.ExchangeId.Binance) {
           ws = new binance.BinanceWS();
+          rest = new binance.BinanceRest({
+            key: privateKey ? privateKey.apiKey : '',
+            secret: privateKey ? privateKey.secret : '',
+            timeout: 15000,
+            recvWindow: 10000,
+            disableBeautification: false,
+            handleDrift: false
+          });
         }
         if (privateKey) {
           return {
@@ -31,6 +39,7 @@ export class Helper {
             endpoint: {
               private: new ccxt[exchange](privateKey),
               ws,
+              rest,
             },
           };
         }
@@ -39,6 +48,7 @@ export class Helper {
           endpoint: {
             public: new ccxt[exchange](privateKey),
             ws,
+            rest,
           },
         };
       case types.ExchangeId.Bitbank:
@@ -50,18 +60,18 @@ export class Helper {
     const allTickers: types.ITickers = {};
     const pairKeys = Object.keys(pairs);
     for (const pair of pairKeys) {
-      const oTicker = tickers.find(ticker => ticker.s === pair.replace('/', ''));
+      const oTicker = tickers.find(ticker => ticker.symbol === pair.replace('/', ''));
       if (oTicker) {
         allTickers[pair] = {
-          ask: +oTicker.a,
-          askVolume: +oTicker.A,
-          bid: +oTicker.b,
-          bidVolume: +oTicker.B,
+          ask: +oTicker.bestAskPrice,
+          askVolume: +oTicker.bestAskQuantity,
+          bid: +oTicker.bestBid,
+          bidVolume: +oTicker.bestBidQuantity,
           symbol: pair,
-          timestamp: oTicker.E,
+          timestamp: oTicker.eventTime,
           datetime: '',
-          high: 0,
-          low: 0,
+          high: +oTicker.high,
+          low: +oTicker.low,
           info: {},
         }
       }
@@ -76,25 +86,43 @@ export class Helper {
   static getRanks(triangles: types.ITriangle[]) {
     const ranks: types.IRank[] = [];
     triangles.reduce((pre, tri) => {
+      const rate = new BigNumber(tri.rate);
       const fee = [
-        tri.netRate * 0.1,
-        tri.netRate * 0.05
+        rate.times(0.1),
+        rate.times(0.05)
       ]
       const profitRate = [
-        tri.netRate - fee[0],
-        tri.netRate - fee[1]
+        rate.minus(fee[0]),
+        rate.minus(fee[1])
       ]
       const rank: types.IRank = {
         stepA: tri.a.coinFrom,
         stepB: tri.b.coinFrom,
         stepC: tri.c.coinFrom,
-        rate: (tri.netRate - 1) * 100,
-        fee,
-        profitRate
+        rate: rate.toFixed(3),
+        fee: [
+          fee[0].toFixed(3),
+          fee[1].toFixed(3)
+        ],
+        profitRate: [
+          profitRate[0].toFixed(3),
+          profitRate[1].toFixed(3)
+        ],
+        ts: tri.ts
       };
       ranks.push(rank)
     }, <any>{});
     return ranks;
+  }
+
+  static toFixed(val: any, precision: number = 8) {
+    return new BigNumber(String(val)).toFixed(precision);
+  }
+
+  static getTriangleRate(priceA: number, priceB: number, priceC: number) {
+    // 利率 = (1/priceA/priceB*priceC-1)*100
+    return new BigNumber(1).div(priceA).div(priceB).times(priceC)
+      .minus(1).times(100).toFixed(3);
   }
 
   static getTimer() {

@@ -10,3 +10,13 @@ export interface IStorage {
     active: any[];
   };
 }
+
+export interface IRank {
+  stepA: string;
+  stepB: string;
+  stepC: string;
+  rate: string;
+  fee: string[];
+  profitRate: string[];
+  ts: number;
+}

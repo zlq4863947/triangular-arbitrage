@@ -18,22 +18,22 @@
     "ws": "node dist/src/lib/bin/ws.js",
     "tslint": "tslint --project ./tslint.json",
     "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
-    "test:m": "cross-env NODE_ENV=test mocha dist/**/storage.test.js --timeout 5000 --require intelli-espower-loader",
+    "test:m": "cross-env NODE_ENV=test mocha dist/**/trading.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
     "bignumber.js": "^6.0.0",
-    "binance": "https://github.com/tiagosiebler/binance/tarball/master",
+    "binance": "^1.3.3",
     "ccxt": "^1.10.1258",
     "cross-env": "^5.1.3",
     "execution-time": "^1.2.0",
     "express": "^4.16.2",
     "moment": "^2.20.1",
+    "pouchdb": "^6.4.3",
+    "pouchdb-find": "^6.4.3",
     "rimraf": "^2.6.2",
     "socket.io": "^2.0.4",
     "toml": "^2.3.3",
-    "pouchdb": "^6.4.3",
-    "pouchdb-find": "^6.4.3",
     "winston": "^3.0.0-rc1"
   },
   "devDependencies": {

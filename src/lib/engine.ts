@@ -20,7 +20,7 @@ export class Engine {
     const edge = <types.IEdge>{ coinFrom, coinTo };
     if (buyTicker) {
       edge.pair = buyTicker.symbol;
-      edge.side = 'BUY';
+      edge.side = 'buy';
       edge.price = edge.conversionRate = buyTicker.ask;
       edge.quantity = buyTicker.askVolume;
     } else {
@@ -30,7 +30,7 @@ export class Engine {
         return;
       }
       edge.pair = sellTicker.symbol;
-      edge.side = 'SELL';
+      edge.side = 'sell';
       edge.price = sellTicker.bid;
       edge.quantity = sellTicker.bidVolume;
       edge.conversionRate = 1 / sellTicker.bid;
@@ -49,14 +49,13 @@ export class Engine {
     if (!a || !b || !c) {
       return;
     }
-    const netRate = a.conversionRate * b.conversionRate * c.conversionRate;
+    const rate = +Helper.getTriangleRate(a.price, b.price, c.price);
     return <types.ITriangle>{
       id: a.coinFrom + '-' + b.coinFrom + '-' + c.coinFrom,
       a,
       b,
       c,
-      netRate,
-      profitRate: netRate - netRate * 0.1,
+      rate,
       ts: Date.now(),
     };
   }
@@ -126,7 +125,7 @@ export class Engine {
     }
     if (candidates.length) {
       candidates.sort((a, b) => {
-        return b.netRate - a.netRate;
+        return b.rate - a.rate;
       });
     }
 

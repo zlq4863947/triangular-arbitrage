@@ -1,6 +1,7 @@
 import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
+import { BigNumber } from 'BigNumber.js';
 import * as types from './type';
 
 const config = require('config');
@@ -40,7 +41,7 @@ export class TriangularArbitrage extends Event {
         if (!exchange) {
           return;
         }
-        exchange.endpoint.ws.onAllTickerStream(this.estimate.bind(this));
+        exchange.endpoint.ws.onAllTickers(this.estimate.bind(this));
       } else {
         this.worker = setInterval(this.estimate.bind(this), this.options.arbitrage.interval * 1000);
       }
@@ -124,16 +125,16 @@ export class TriangularArbitrage extends Event {
         return;
       }
 
+      const ranks = Helper.getRanks(candidates);
       if (this.isDisplay) {
         // 更新套利数据
-        this.emit('updateArbitage', candidates);
+        this.emit('updateArbitage', ranks);
       }
       // 更新套利数据
-      const champion = candidates[0];
-      if (champion.profitRate > this.options.arbitrage.minRateProfit) {
-        logger.info(`选出套利组成冠军：${JSON.stringify(champion, null, 2)}`);
+      if (ranks[0] && new BigNumber(ranks[0].profitRate[0]).isGreaterThanOrEqualTo(this.options.arbitrage.minRateProfit)) {
+        logger.info(`选出套利组合第一名：${candidates[0].id}`);
         // 执行三角套利
-        this.emit('placeOrder', exchange, champion);
+        this.emit('placeOrder', exchange, candidates[0]);
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
     } catch (err) {

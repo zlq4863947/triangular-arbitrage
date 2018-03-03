@@ -13,6 +13,7 @@ export interface IExchange {
     public?: any;
     private?: any;
     ws?: any;
+    rest?: any;
   };
   markets?: IMarkets;
   pairs?: IPairs;

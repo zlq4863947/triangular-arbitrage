@@ -1,5 +1,6 @@
 
 import * as PouchDB from 'pouchdb';
+import * as types from './type';
 import { logger } from './common';
 const config = require('config');
 
@@ -16,6 +17,28 @@ export class Storage {
     this.pouchDB = new PouchDB(this.url);
   }
 
+  async putRanks(ranks: types.IRank[]) {
+
+    try {
+      const docs = await this.pouchDB.allDocs({
+        include_docs: true,
+        attachments: true
+      });
+      if (docs.rows.length > config.display.maxRows) {
+        // 超过最大显示数时，清空数据库
+        await this.removeAllDocs();
+      }
+
+      for (let [i, row] of ranks.entries()) {
+        if (docs.rows[i]) {
+          ranks[i] = Object.assign({}, docs.rows[i].doc, row)
+        }
+      }
+      return await this.pouchDB.bulkDocs(ranks);
+    } catch (err) {
+      logger.error(`存储排行数据出错: ${err}`);
+    }
+  }
   /**
    * 存储数据
    * @param rows
@@ -33,7 +56,7 @@ export class Storage {
       }
       return await this.pouchDB.bulkDocs(rows);
     } catch (err) {
-      logger.error(`数据库放入候选者出错: ${err}`);
+      logger.error(`存储数据出错: ${err}`);
     }
   }
 
@@ -54,7 +77,32 @@ export class Storage {
       }
       return docs;
     } catch (err) {
-      logger.error(`数据库获取候选者出错: ${err}`);
+      logger.error(`获取数据出错: ${err}`);
+    }
+  }
+
+  async removeAllDocs() {
+    try {
+
+      const docsInfo = await this.pouchDB.allDocs({
+        include_docs: true,
+        attachments: true
+      });
+      if (docsInfo && docsInfo.rows && docsInfo.rows.length > 0) {
+        const docs: any[] = [];
+        if (docsInfo && docsInfo.rows && docsInfo.rows.length > 0) {
+          const rows: any[] = docsInfo.rows;
+          rows.reduce((pre, row) => {
+            if (row && row.doc) {
+              row.doc._deleted = true;
+              docs.push(row.doc);
+            }
+          }, <any>{});
+        }
+        return await this.pouchDB.bulkDocs(docs);
+      }
+    } catch (err) {
+      logger.error(`删除数据出错: ${err}`);
     }
   }
 

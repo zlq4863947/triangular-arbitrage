@@ -17,7 +17,7 @@ export interface IEdge {
   coinFrom: string;
   coinTo: string;
   // 交易方向
-  side: 'SELL' | 'BUY';
+  side: 'sell' | 'buy';
   // 最佳价格
   price: number;
   // 最佳数量
@@ -35,10 +35,8 @@ export interface ITriangle {
   a: IEdge;
   b: IEdge;
   c: IEdge;
-  // 净利率
-  netRate: number;
-  // 盈利率
-  profitRate: number;
+  // 利率
+  rate: number;
   // 时间戳
   ts: number;
 }
