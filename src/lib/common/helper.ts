@@ -114,7 +114,7 @@ export class Helper {
    * 获取排行数据
    * @param triangles 三角套利数组
    */
-  static getRanks(triangles: types.ITriangle[]) {
+  static getRanks(exchangeId: types.ExchangeId, triangles: types.ITriangle[]) {
     const ranks: types.IRank[] = [];
     triangles.reduce(
       (pre, tri) => {
@@ -122,7 +122,10 @@ export class Helper {
           return;
         }
         const rate = new BigNumber(tri.rate);
-        const fee = [rate.times(0.1), rate.times(0.05)];
+        let fee = [0, 0];
+        if (exchangeId === types.ExchangeId.Binance) {
+          fee = [rate.times(0.1).toNumber(), rate.times(0.05).toNumber()];
+        }
         const profitRate = [rate.minus(fee[0]), rate.minus(fee[1])];
         if (profitRate[0].isLessThan(config.arbitrage.minRateProfit)) {
           return;
@@ -132,7 +135,7 @@ export class Helper {
           stepB: tri.b.coinFrom,
           stepC: tri.c.coinFrom,
           rate: rate.toNumber(),
-          fee: [fee[0].toNumber(), fee[1].toNumber()],
+          fee: [fee[0], fee[1]],
           profitRate: [profitRate[0].toNumber(), profitRate[1].toNumber()],
           ts: tri.ts,
         };

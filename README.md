@@ -17,6 +17,12 @@ npm install
 npm start
 ```
 
+## 
+
+```js
+npm run ws
+```
+
 
 <p align="center"><img src="assets/index.png"></p>
 

@@ -5,6 +5,7 @@ import { Aggregator } from './aggregator';
 import { BigNumber } from 'BigNumber.js';
 import * as types from './type';
 
+const clc = require('cli-color');
 const config = require('config');
 
 export class TriangularArbitrage extends Event {
@@ -118,8 +119,8 @@ export class TriangularArbitrage extends Event {
         return;
       }
 
-      const ranks = Helper.getRanks(candidates);
-      if (config.storage.tickRank) {
+      const ranks = Helper.getRanks(exchange.id, candidates);
+      if (config.storage.tickRank && ranks.length > 0) {
         // 更新套利数据
         this.emit('updateArbitage', ranks);
       }
@@ -128,6 +129,13 @@ export class TriangularArbitrage extends Event {
         logger.info(`选出套利组合第一名：${candidates[0].id}, 预测利率(扣除手续费): ${ranks[0].profitRate[0]}`);
         // 执行三角套利
         this.emit('placeOrder', exchange, candidates[0]);
+      }
+
+      const output = candidates.length > 5 ? candidates.slice(0, 5) : candidates.slice(0, candidates.length);
+      for (const candidate of output) {
+        const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate)
+        const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id
+        logger.info(`路径：${clc.cyanBright(path)} 利率: ${clcRate}`);
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
     } catch (err) {

@@ -1,5 +1,6 @@
 import { logger, Helper } from './common';
 import { BigNumber } from 'BigNumber.js';
+import { Bitbank } from 'bitbank-handler';
 import * as types from './type';
 
 export class Trading {
@@ -9,8 +10,18 @@ export class Trading {
     if (account) {
       return account.balances;
     }*/
+
     const api = exchange.endpoint.private;
-    return await api.fetchBalance();
+    if (!api) {
+      return;
+    }
+    switch (exchange.id) {
+      case types.ExchangeId.Bitbank:
+        const bitbank = (<Bitbank>api);
+        return await bitbank.getAssets().toPromise();
+      default:
+        return await api.fetchBalance();
+    }
   }
 
   // 模拟下单
