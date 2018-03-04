@@ -11,13 +11,18 @@
 2、config/default.toml文件中配置修改，例如：币安apikey
 
 ## 启动步骤
+启动自动套利程序步骤
 
 ```js
+// 只在第一次安装程序时需要运行
 npm install
+// 启动自动套利主程序
 npm start
 ```
 
-## 
+## web服务启动步骤
+
+非必须启动项，想看的排行页面的同学需要启动此服务
 
 ```js
 npm run ws
