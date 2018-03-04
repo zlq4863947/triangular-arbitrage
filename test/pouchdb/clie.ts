@@ -7,7 +7,7 @@ const storage = new Storage();
   storage.onChanged(async (change: any) => {
     const docs = await storage.pouchDB.allDocs({
       include_docs: true,
-      attachments: true
+      attachments: true,
     });
     console.log('to change: ', JSON.stringify(docs, null, 2));
   });

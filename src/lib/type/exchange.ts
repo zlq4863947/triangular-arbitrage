@@ -20,11 +20,11 @@ export interface IExchange {
 }
 
 export interface IMarkets {
-  [baseCoin: string]: IMarket[]
+  [baseCoin: string]: IMarket[];
 }
 
 export interface IPairs {
-  [pair: string]: IMarket
+  [pair: string]: IMarket;
 }
 
 export enum ExchangeId {

@@ -1,17 +1,27 @@
 import { logger, Helper } from './common';
 import { BigNumber } from 'BigNumber.js';
+import { Bitbank } from 'bitbank-handler';
 import * as types from './type';
 
 export class Trading {
-
   async getBalance(exchange: types.IExchange) {
     /*const api = exchange.endpoint.rest;
     const account = await api.account();
     if (account) {
       return account.balances;
     }*/
+
     const api = exchange.endpoint.private;
-    return await api.fetchBalance();
+    if (!api) {
+      return;
+    }
+    switch (exchange.id) {
+      case types.ExchangeId.Bitbank:
+        const bitbank = (<Bitbank>api);
+        return await bitbank.getAssets().toPromise();
+      default:
+        return await api.fetchBalance();
+    }
   }
 
   // 模拟下单
@@ -27,23 +37,27 @@ export class Trading {
       /*const btcAsset = (<Array<any>>balances).find((o: any, index: number, arr: any[]) => {
         return o.asset === triangle.a.coinFrom;
       });*/
-      const btcAsset = balances[triangle.a.coinFrom];
+      const assetA = balances[triangle.a.coinFrom];
 
-      if (!btcAsset) {
-        logger.info('未查找到持有BTC！！');
+      if (!assetA) {
+        logger.info(`未查找到持有${triangle.a.coinFrom}！！`);
         return;
       }
 
       logger.info('模拟下单...');
-      const freeMoney = +btcAsset.free;
+      const freeMoney = +assetA.free;
       // 使用1%的资产购买
-      const buyBtc = freeMoney * 0.01;
-      const afterBtc = new BigNumber(buyBtc).div(triangle.a.price).div(triangle.b.price).times(triangle.c.price);
-      const profit = afterBtc.minus(buyBtc).div(buyBtc).times(100).toFixed(3);
-      logger.info(`使用btc：${Helper.toFixed(buyBtc)}，获得btc: ${Helper.toFixed(afterBtc)},盈利%：${profit}%`);
+      const buyCapital = new BigNumber(freeMoney).times(0.01);
+      const profitRate = Helper.getTriangleRate(triangle.a, triangle.b, triangle.c);
+      const afterCapital = buyCapital.times(profitRate);
+      logger.info(
+        `使用${triangle.a.coinFrom}：${Helper.toFixed(buyCapital)}，获得${triangle.a.coinFrom}: ${Helper.toFixed(
+          afterCapital,
+        )},盈利%：${profitRate}%`,
+      );
       return true;
     } catch (err) {
-      logger.error(`订单出错： ${err.stack ? err.stack : err.msg}`);
+      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
     }
   }
   /*
@@ -52,7 +66,7 @@ export class Trading {
       // logger.info(`pairToTrade: ${JSON.stringify(pairToTrade, null, 2)}`);
       const api = exchange.endpoint.private;
       if (!api) {
-        logger.info('未查找到私有api，请检查是否设置apikey！！');
+        logger.info('未查找到私有api，请检查是否设置,apikey！！');
         return;
       }
   
@@ -110,7 +124,7 @@ export class Trading {
           this._worker = setInterval(nextB.bind(this), 1000);
         }
       } catch (err) {
-        logger.error(`订单出错： ${err.stack ? err.stack : err.msg}`);
+        logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
       }
     }
   
@@ -172,7 +186,7 @@ export class Trading {
           this._worker = setInterval(nextC.bind(this), 1000);
         }
       } catch (err) {
-        logger.error(`订单出错： ${err.stack ? err.stack : err.msg}`);
+        logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
       }
     }
   
@@ -240,7 +254,7 @@ export class Trading {
           this._worker = setInterval(completedC.bind(this), 1000);
         }
       } catch (err) {
-        logger.error(`订单出错： ${err.stack ? err.stack : err.msg}`);
+        logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
       }
     }
   

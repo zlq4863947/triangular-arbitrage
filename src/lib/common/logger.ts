@@ -23,10 +23,6 @@ let myTransports = [
     filename: `${logDir}/error.log`,
     level: 'error',
   }),
-  new transports.Console({
-    format: combine(colorize(), myFormat),
-    level: 'error',
-  }),
   new transports.File({
     filename: `${logDir}/combined.log`,
     level: 'info',
@@ -47,7 +43,7 @@ if (config.log.debug) {
       format: combine(colorize(), myFormat),
       level: 'debug',
     }),
-  ])
+  ]);
 }
 
 export const logger = createLogger({

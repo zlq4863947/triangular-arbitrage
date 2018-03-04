@@ -1,12 +1,9 @@
 import * as types from './type';
 import { logger, Helper } from './common';
 
-export class Engine {
-  limit: number;
+const config = require('config');
 
-  constructor(options: types.IEngineOptions) {
-    this.limit = options.limit;
-  }
+export class Engine {
 
   // 获取组合的边
   getEdge(tickers: types.ITickers, coinFrom: string, coinTo: string) {
@@ -49,7 +46,7 @@ export class Engine {
     if (!a || !b || !c) {
       return;
     }
-    const rate = +Helper.getTriangleRate(a.price, b.price, c.price);
+    const rate = Helper.getTriangleRate(a, b, c);
     return <types.ITriangle>{
       id: a.coinFrom + '-' + b.coinFrom + '-' + c.coinFrom,
       a,
@@ -107,20 +104,28 @@ export class Engine {
     return triangles;
   }
 
-  async getCandidates(exchange: types.IExchange, tickers: types.ITickers, options: types.IArbitrageOptions) {
+  async getCandidates(exchange: types.IExchange, tickers: types.ITickers) {
     let candidates: types.ITriangle[] = [];
-    const paths = options.arbitrage.baseCoins;
+    if (!exchange.markets) {
+      return;
+    }
+    const marketPairs = Object.keys(exchange.markets);
     const api = exchange.endpoint.public || exchange.endpoint.private;
-    if (!api || paths.length === 0) {
+    if (!api || marketPairs.length === 0) {
       return;
     }
     const timer = Helper.getTimer();
     logger.debug('getCandidates:获取全市场候选者[开始]');
+    for (const [index, marketPair] of marketPairs.entries()) {
+      const paths = marketPairs.slice(0);
+      // 删除起始路径
+      paths.splice(index, 1);
 
-    for (const path of options.arbitrage.baseCoins) {
-      const foundCandidates = this.findCandidates(exchange, tickers, options.arbitrage.start, path);
-      if (foundCandidates && foundCandidates.length > 0) {
-        candidates = candidates.concat(foundCandidates);
+      for (const path of paths) {
+        const foundCandidates = this.findCandidates(exchange, tickers, marketPair, path);
+        if (foundCandidates && foundCandidates.length > 0) {
+          candidates = candidates.concat(foundCandidates);
+        }
       }
     }
     if (candidates.length) {
@@ -130,8 +135,8 @@ export class Engine {
     }
 
     // 淘汰落选者
-    if (candidates.length > this.limit) {
-      candidates = candidates.slice(0, this.limit);
+    if (candidates.length > config.display.maxRows) {
+      candidates = candidates.slice(0, config.display.maxRows);
     }
 
     logger.debug(`getCandidates:获取全市场候选者[终了] ${Helper.endTimer(timer)}`);
