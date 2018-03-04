@@ -4,24 +4,20 @@ import { Storage } from '../src/lib/storage';
 import * as types from '../src/lib/type';
 import * as PouchDB from 'pouchdb';
 import * as find from 'pouchdb-find';
-PouchDB.plugin(find)
+PouchDB.plugin(find);
 
 const storage = new Storage();
 
 const testPutDb = async () => {
   const doc = {
-    '_id': 'mittens2',
-    'name': 'Mittens',
-    'occupation': 'kitten',
-    'age': 3,
-    'hobbies': [
-      'playing with balls of yarn',
-      'chasing laser pointers',
-      'lookin hella cute'
-    ]
+    _id: 'mittens2',
+    name: 'Mittens',
+    occupation: 'kitten',
+    age: 3,
+    hobbies: ['playing with balls of yarn', 'chasing laser pointers', 'lookin hella cute'],
   };
-  const res = await storage.removeAllDocs()
-  console.log(res)
+  const res = await storage.removeAllDocs();
+  console.log(res);
   // const res = await storage.pouchDB.put(doc)
   // console.log('res: ', res)
   /* const info = await movies.info();
@@ -45,8 +41,8 @@ const testPutDb = async () => {
     limit: 10
   });
   console.log('findData: ', findData.docs);*/
-}
+};
 
 describe('存储测试', () => {
-  it('测试pouchdb', testPutDb)
+  it('测试pouchdb', testPutDb);
 });

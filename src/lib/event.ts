@@ -32,6 +32,8 @@ export class Event extends EventEmitter {
 
   async onUpdateArbitage(ranks: types.IRank[]) {
     const timer = Helper.getTimer();
-    await this.storage.putRanks(ranks);
+    if (ranks.length > 0) {
+      await this.storage.putRanks(ranks);;
+    }
   }
 }

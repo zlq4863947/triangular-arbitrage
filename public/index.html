@@ -19,12 +19,13 @@
       </div>
     </div>
     <div class="row">
-      <table class="eleven columns table">
+      <table class="u-max-full-width">
         <thead>
           <tr>
-            <th>Step A</th>
-            <th>Step B</th>
-            <th>Step C</th>
+            <th>数据时间 </th>
+            <th>A </th>
+            <th>B </th>
+            <th>C </th>
             <th>Rate</th>
             <th>正常手续费</th>
             <th>(Rate - 手续费)</th>
@@ -34,14 +35,24 @@
         </thead>
         <tbody>
           <tr ng-repeat="(index,rank) in ranks">
-            <td>{{rank.stepA}}</td>
-            <td>{{rank.stepB}}</td>
-            <td>{{rank.stepC}}</td>
-            <td style="font: caption;">{{rank.rate + '%'}}</td>
-            <td style="font: caption;">{{rank.fee[0] + '%'}}</td>
-            <td style="font: caption;">{{rank.profitRate[0] + '%'}}</td>
-            <td style="font: caption;">{{rank.fee[1] + '%'}}</td>
-            <td style="font: caption;">{{rank.profitRate[1] + '%'}}</td>
+            <td style="font: caption;">{{rank.ts | date:'HH:mm:ss'}}</td>
+            <td style="font: caption;">
+              <img ng-src="{{'/image/coins/' + rank.stepA + '.png'}}" />
+              <br> {{rank.stepA}}
+            </td>
+            <td style="font: caption;">
+              <img ng-src="{{'/image/coins/' + rank.stepB + '.png'}}" />
+              <br> {{rank.stepB}}
+            </td>
+            <td style="font: caption;">
+              <img ng-src="{{'/image/coins/' + rank.stepC + '.png'}}" />
+              <br> {{rank.stepC}}
+            </td>
+            <td style="font: caption;">{{rank.rate.toFixed(3) + '%'}}</td>
+            <td style="font: caption;">{{rank.fee[0].toFixed(4) + '%'}}</td>
+            <td style="font: caption;">{{rank.profitRate[0].toFixed(4) + '%'}}</td>
+            <td style="font: caption;">{{rank.fee[1].toFixed(4) + '%'}}</td>
+            <td style="font: caption;">{{rank.profitRate[1].toFixed(4) + '%'}}</td>
           </tr>
         </tbody>
     </div>

@@ -29,10 +29,6 @@
   interval = 1
   # 最小盈利率
   minRateProfit = 0.02
-  # 起点
-  start = "BTC"
-  # 匹配基准
-  baseCoins = ["BNB", "ETH", "USDT"]
 
 ###
 ### [log]
