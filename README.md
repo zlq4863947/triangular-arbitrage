@@ -22,13 +22,21 @@ npm start
 
 ## web服务启动步骤
 
-非必须启动项，想看的排行页面的同学需要启动此服务
+非必须启动项，只对想看的排行页面的同学需要如下配置
 
+- 下载并安装CouchDB数据库
+https://couchdb.apache.org/#download
+
+- default.toml配置
+找到storage项目中的｀url = ‘’｀改为｀url = ‘http://localhost:5984’｀
+
+- CMD切换到项目路径，执行如下命令
 ```js
 npm run ws
 ```
 
-
+## 页面显示
+打开`127.0.0.1：3000`后，显示如下：
 <p align="center"><img src="assets/index.png"></p>
 
 ## 疑难解答
