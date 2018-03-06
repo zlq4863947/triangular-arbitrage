@@ -28,7 +28,8 @@ npm start
 https://couchdb.apache.org/#download
 
 - default.toml配置
-找到storage项目中的｀url = ‘’｀改为｀url = ‘http://localhost:5984’｀
+
+找到storage项目中的`url = ''`改为`url = 'http://localhost:5984'`
 
 - CMD切换到项目路径，执行如下命令
 ```js
