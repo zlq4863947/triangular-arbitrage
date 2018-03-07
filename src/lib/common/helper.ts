@@ -183,4 +183,31 @@ export class Helper {
   static endTimer(timer: any) {
     return timer.stop().words;
   }
+
+  /**
+   * 获取价格精度
+   */
+  static getPriceScale(pairs: types.IPairs, pairName: string): types.IPrecision | undefined {
+    const symbol = pairs[pairName]
+    if (!symbol) {
+      return;
+    }
+    return {
+      amount: symbol.precision.amount,
+      price: symbol.precision.price
+    }
+  }
+
+  /**
+   * 获取交易额度
+   */
+  static getTradeAmount(tradeAmount: BigNumber, feeAmount: BigNumber) {
+    // 如果A点交易额 x 50% < 该资产可用额度
+    if (tradeAmount.times(0.5).isLessThan(feeAmount)) {
+      // 返回交易额 x 50% 
+      return tradeAmount.times(0.5);
+    }
+    // 返回可用额度 x 50% 
+    return feeAmount.times(0.5);
+  }
 }

@@ -17,6 +17,8 @@
     "start:dev": "node dist/src/lib/bin/start.js",
     "ws": "node dist/src/lib/bin/ws.js",
     "tslint": "tslint --project ./tslint.json",
+    "db:serv": "node dist/test/pouchdb/serv.js",
+    "db:clie": "node dist/test/pouchdb/clie.js",
     "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
     "test:m": "cross-env NODE_ENV=test mocha dist/**/trading.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"

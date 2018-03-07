@@ -40,3 +40,10 @@ export interface ITriangle {
   // 时间戳
   ts: number;
 }
+
+export interface IPrecision {
+  // 数量精度
+  amount: number;
+  // 价格精度
+  price: number;
+}
