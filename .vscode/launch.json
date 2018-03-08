@@ -20,6 +20,9 @@
       "env": {
         "NODE_ENV": "test"
       },
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
       "internalConsoleOptions": "openOnSessionStart"
     },
     {

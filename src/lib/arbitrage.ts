@@ -58,7 +58,7 @@ export class TriangularArbitrage extends Event {
     }
   }
 
-  private async initExchange(exchangeId: types.ExchangeId) {
+  public async initExchange(exchangeId: types.ExchangeId) {
     const timer = Helper.getTimer();
     logger.debug('初始化交易所[启动]');
     try {

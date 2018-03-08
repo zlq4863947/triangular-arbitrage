@@ -8,7 +8,7 @@ setInterval(async () => {
   try {
     z_index++;
     const rows = [{ z_index, title: 'Lisa Says' }, { z_index, title: 'Space Oddity' }, { z_index, title: '23tl' }];
-    const docs = await storage.pouchDB.allDocs({
+    const docs = await storage.rank.allDocs({
       include_docs: true,
       attachments: true,
     });
@@ -17,7 +17,7 @@ setInterval(async () => {
         rows[i] = Object.assign({}, docs.rows[i].doc, row);
       }
     }
-    const res = await storage.pouchDB.bulkDocs(rows);
+    const res = await storage.rank.bulkDocs(rows);
     console.log(z_index, res);
   } catch (err) {
     console.error(err);

@@ -180,6 +180,7 @@ export class Helper {
     timer.start();
     return timer;
   }
+
   static endTimer(timer: any) {
     return timer.stop().words;
   }
@@ -199,9 +200,9 @@ export class Helper {
   }
 
   /**
-   * 获取交易额度
+   * 获取基础货币交易额度
    */
-  static getTradeAmount(tradeAmount: BigNumber, feeAmount: BigNumber) {
+  static getBaseTradeAmount(tradeAmount: BigNumber, feeAmount: BigNumber) {
     // 如果A点交易额 x 50% < 该资产可用额度
     if (tradeAmount.times(0.5).isLessThan(feeAmount)) {
       // 返回交易额 x 50% 
