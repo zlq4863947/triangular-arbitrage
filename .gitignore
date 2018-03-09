@@ -60,4 +60,3 @@ typings/
 dist
 .history
 config/**/*.toml
-storage
