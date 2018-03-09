@@ -2,7 +2,7 @@ import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
 import { Aggregator } from './aggregator';
-import { BigNumber } from 'BigNumber.js';
+import { BigNumber } from 'bignumber.js';
 import * as types from './type';
 
 const clc = require('cli-color');

@@ -1,5 +1,5 @@
 import { logger, Helper } from './common';
-import { BigNumber } from 'BigNumber.js';
+import { BigNumber } from 'bignumber.js';
 import { Bitbank } from 'bitbank-handler';
 import * as types from './type';
 

@@ -1,5 +1,5 @@
 import * as types from '../type';
-import { BigNumber } from 'BigNumber.js';
+import { BigNumber } from 'bignumber.js';
 import * as bitbank from 'bitbank-handler';
 
 const ccxt = require('ccxt');
