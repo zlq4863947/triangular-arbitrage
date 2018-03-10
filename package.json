@@ -22,6 +22,7 @@
     "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
     "test:m": "cross-env NODE_ENV=test mocha dist/**/trading.test.js --timeout 5000 --require intelli-espower-loader",
     "test:db": "cross-env NODE_ENV=test mocha dist/**/storage.test.js --timeout 5000 --require intelli-espower-loader",
+    "test:api": "cross-env NODE_ENV=test mocha dist/**/api-handler.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
