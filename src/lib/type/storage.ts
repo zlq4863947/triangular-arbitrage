@@ -16,17 +16,20 @@ export interface IRank {
 export interface ITradeEdge {
   pair: string;
   side: 'buy' | 'sell';
-  // 成交数量
-  amount: number;
   // 成交价格
   price: number;
+  // 报单数量
+  amount: number;
   // 手续费（未折扣）
+  // 报单数量(BigNumber)
+  bigAmount: BigNumber;
   fee: string;
   // 用时
   timecost: string;
 }
 
 export interface ITradeTriangle {
+  _id?: string;
   a: ITradeEdge;
   b: ITradeEdge;
   c: ITradeEdge;
@@ -36,7 +39,7 @@ export interface ITradeTriangle {
   before: number;
   // 套利后获得资金
   after: number;
-  profit: number;
+  profit: string;
   rate: string;
   ts: number;
 }

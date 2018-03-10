@@ -189,26 +189,94 @@ export class Helper {
    * 获取价格精度
    */
   static getPriceScale(pairs: types.IPairs, pairName: string): types.IPrecision | undefined {
-    const symbol = pairs[pairName]
+    const symbol = pairs[pairName];
     if (!symbol) {
       return;
     }
     return {
       amount: symbol.precision.amount,
-      price: symbol.precision.price
-    }
+      price: symbol.precision.price,
+      cost: symbol.limits.cost ? symbol.limits.cost.min : undefined
+    };
   }
 
   /**
    * 获取基础货币交易额度
    */
-  static getBaseTradeAmount(tradeAmount: BigNumber, feeAmount: BigNumber) {
+  static getBaseTradeAmount(tradeAmount: BigNumber, freeAmount: BigNumber) {
     // 如果A点交易额 x 50% < 该资产可用额度
-    if (tradeAmount.times(0.5).isLessThan(feeAmount)) {
-      // 返回交易额 x 50% 
+    if (tradeAmount.times(0.5).isLessThan(freeAmount)) {
+      // 返回交易额 x 50%
       return tradeAmount.times(0.5);
     }
-    // 返回可用额度 x 50% 
-    return feeAmount.times(0.5);
+    // 返回可用额度 x 50%
+    return freeAmount.times(0.5);
+  }
+
+  /**
+   * 获取基础货币交易额度（通过B和C和可用余额取最小）
+   * @see https://github.com/zlq4863947/triangular-arbitrage/issues/13
+   */
+  static getBaseAmountByBC(triangle: types.ITriangle, freeAmount: BigNumber) {
+    const { a, b, c } = triangle;
+    // 购买C的成本
+    let b2cCost, c2aCost;
+    if (triangle.b.side.toLowerCase() === 'buy') {
+      // B2C_cost_coinA = B2C_volumn / B2C_price x C2A_price
+      b2cCost = new BigNumber(b.quantity).div(b.price).times(c.price);
+      // 换回A的成本
+      // C2A_cost = C2A_volumn * C2A_price
+      c2aCost = new BigNumber(c.quantity).times(c.price);
+    } else {
+      // B2C_cost_coinA = B2C_volumn * B2C_ask_price / A2B_price
+      b2cCost = new BigNumber(b.quantity).times(b.price).div(a.price);
+      // 换回A的成本
+      // C2A_cost = C2A_volumn * C2A_price
+      c2aCost = new BigNumber(c.quantity).times(c.price);
+    }
+    // 购买C的成本 <= 换回A的成本 && 购买C的成本 <= 可用余额
+    if (b2cCost.isLessThanOrEqualTo(c2aCost) && b2cCost.isLessThanOrEqualTo(freeAmount)) {
+      // 购买C的成本
+      return b2cCost;
+    } else if (c2aCost.isLessThanOrEqualTo(freeAmount)) {
+      // 换回A的成本 <= 可用余额
+      return c2aCost;
+    }
+    return freeAmount;
+  }
+
+  /**
+   * 格式化成交金额
+   */
+  static formatTradeAmount(amount: BigNumber, price: number, side: string, precision: types.IPrecision) {
+    if (!precision.cost) {
+      return amount;
+    }
+
+    const bigCost = new BigNumber(precision.cost);
+    let total, resetAmount, scale;
+    if (side.toLowerCase() === 'buy') {
+      scale = precision.amount;
+      total = amount.times(price);
+      // 总价 <= 最小成交价
+      if (total.isLessThanOrEqualTo(bigCost)) {
+        // 确保交易成功，增加5%
+        resetAmount = bigCost.times(1.05).div(price);
+      }
+    } else {
+      scale = precision.price;
+      total = amount.div(price);
+      // 总价 <= 最小成交价
+      if (total.isLessThanOrEqualTo(bigCost)) {
+        // 确保交易成功，增加5%
+        resetAmount = bigCost.times(1.05).times(price);
+      }
+    }
+    if (!resetAmount) {
+      resetAmount = amount;
+    }
+    const fmtAmount = new BigNumber(resetAmount.toFixed(scale))
+    // 格式化购买数量
+    return fmtAmount.isZero() ? resetAmount : fmtAmount;
   }
 }

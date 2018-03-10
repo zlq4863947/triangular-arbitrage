@@ -23,7 +23,7 @@ export interface IEdge {
   // 最佳数量
   quantity: number;
   // 兑换率
-  conversionRate: number;
+  // conversionRate: number;
 }
 
 /**
@@ -46,4 +46,6 @@ export interface IPrecision {
   amount: number;
   // 价格精度
   price: number;
+  // 最小成交金额
+  cost?: number;
 }

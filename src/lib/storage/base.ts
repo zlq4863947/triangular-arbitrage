@@ -2,9 +2,8 @@ import * as PouchDB from 'pouchdb';
 import { logger } from '../common';
 
 export class StorageBase extends PouchDB {
-
   constructor(url: string) {
-    super(url)
+    super(url);
   }
 
   /**
@@ -17,7 +16,7 @@ export class StorageBase extends PouchDB {
         include_docs: true,
         attachments: true,
       });
-      for (let [i, row] of rows.entries()) {
+      for (const [i, row] of rows.entries()) {
         if (docs.rows[i]) {
           rows[i] = Object.assign({}, docs.rows[i].doc, row);
         }

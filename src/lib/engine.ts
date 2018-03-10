@@ -4,7 +4,6 @@ import { logger, Helper } from './common';
 const config = require('config');
 
 export class Engine {
-
   // 获取组合的边
   getEdge(tickers: types.ITickers, coinFrom: string, coinTo: string) {
     if ((!tickers && Object.keys(tickers).length === 0) || !coinFrom || !coinTo) {
@@ -18,7 +17,7 @@ export class Engine {
     if (buyTicker) {
       edge.pair = buyTicker.symbol;
       edge.side = 'buy';
-      edge.price = edge.conversionRate = buyTicker.ask;
+      edge.price = buyTicker.ask;
       edge.quantity = buyTicker.askVolume;
     } else {
       // 查找匹配的ticker
@@ -30,7 +29,6 @@ export class Engine {
       edge.side = 'sell';
       edge.price = sellTicker.bid;
       edge.quantity = sellTicker.bidVolume;
-      edge.conversionRate = 1 / sellTicker.bid;
     }
     return edge;
   }

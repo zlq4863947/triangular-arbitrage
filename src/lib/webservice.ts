@@ -44,7 +44,7 @@ export class WebService {
         logger.info('请使用浏览器打开: http://127.0.0.1:' + port);
         that.storage.rank.onChanged(async (change: any) => {
           const docs = await that.storage.rank.getAllDocs();
-          for (let ws of that.connected) {
+          for (const ws of that.connected) {
             if (ws) {
               ws.emit('updateArbitage', docs);
             }

@@ -7,12 +7,12 @@ export class Rank extends StorageBase {
   static id = 'rank';
 
   constructor(url: string) {
-    super(url + Rank.id)
+    super(url + Rank.id);
   }
 
   async putRanks(ranks: types.IRank[]) {
     try {
-      logger.info('存入排行数据，大小：' + ranks.length)
+      logger.info('存入排行数据，大小：' + ranks.length);
       const docs = await this.allDocs({
         include_docs: true,
         attachments: true,
@@ -23,7 +23,7 @@ export class Rank extends StorageBase {
       }
 
       const removeList = [];
-      for (let [i, row] of docs.rows.entries()) {
+      for (const [i, row] of docs.rows.entries()) {
         if (ranks[i]) {
           ranks[i] = Object.assign({}, row.doc, ranks[i]);
         } else {

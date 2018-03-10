@@ -3,8 +3,6 @@ import { logger, Helper } from './common';
 import { Bitbank } from 'bitbank-handler';
 
 export class Aggregator {
-
-
   async getMarkets(exchange: types.IExchange): Promise<types.IPairs | undefined> {
     const api = exchange.endpoint.public || exchange.endpoint.private;
     if (!api) {
@@ -13,14 +11,14 @@ export class Aggregator {
     switch (exchange.id) {
       case types.ExchangeId.Bitbank:
         return <any>{
-          'BCC/BTC': { 'id': 'bcc_btc', 'symbol': 'BCC/BTC', 'base': 'BCC', 'quote': 'BTC', 'baseId': 'BCC' },
-          'BCC/JPY': { 'id': 'bcc_jpy', 'symbol': 'BCC/JPY', 'base': 'BCC', 'quote': 'JPY', 'baseId': 'BCC' },
-          'MONA/BTC': { 'id': 'mona_btc', 'symbol': 'MONA/BTC', 'base': 'MONA', 'quote': 'BTC' },
-          'MONA/JPY': { 'id': 'mona_jpy', 'symbol': 'MONA/JPY', 'base': 'MONA', 'quote': 'JPY' },
-          'ETH/BTC': { 'id': 'eth_btc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC' },
-          'LTC/BTC': { 'id': 'ltc_btc', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC' },
-          'XRP/JPY': { 'id': 'xrp_jpy', 'symbol': 'XRP/JPY', 'base': 'XRP', 'quote': 'JPY' },
-          'BTC/JPY': { 'id': 'btc_jpy', 'symbol': 'BTC/JPY', 'base': 'BTC', 'quote': 'JPY' },
+          'BCC/BTC': { id: 'bcc_btc', symbol: 'BCC/BTC', base: 'BCC', quote: 'BTC', baseId: 'BCC' },
+          'BCC/JPY': { id: 'bcc_jpy', symbol: 'BCC/JPY', base: 'BCC', quote: 'JPY', baseId: 'BCC' },
+          'MONA/BTC': { id: 'mona_btc', symbol: 'MONA/BTC', base: 'MONA', quote: 'BTC' },
+          'MONA/JPY': { id: 'mona_jpy', symbol: 'MONA/JPY', base: 'MONA', quote: 'JPY' },
+          'ETH/BTC': { id: 'eth_btc', symbol: 'ETH/BTC', base: 'ETH', quote: 'BTC' },
+          'LTC/BTC': { id: 'ltc_btc', symbol: 'LTC/BTC', base: 'LTC', quote: 'BTC' },
+          'XRP/JPY': { id: 'xrp_jpy', symbol: 'XRP/JPY', base: 'XRP', quote: 'JPY' },
+          'BTC/JPY': { id: 'btc_jpy', symbol: 'BTC/JPY', base: 'BTC', quote: 'JPY' },
         };
       default:
         return await api.loadMarkets();
@@ -36,15 +34,15 @@ export class Aggregator {
       switch (exchange.id) {
         case types.ExchangeId.Binance:
           if (!extTickers) {
-            logger.error(`getAllTickers:[${exchange.id}], 未传递extTickers数据！`)
+            logger.error(`getAllTickers:[${exchange.id}], 未传递extTickers数据！`);
             return;
           }
           return Helper.changeBinanceTickers(extTickers, exchange.pairs);
         case types.ExchangeId.Bitbank:
           const symbols = Object.keys(exchange.pairs);
-          const bitbank = (<Bitbank>api);
+          const bitbank = <Bitbank>api;
           const tickers: types.ITickers = {};
-          for (let symbol of symbols) {
+          for (const symbol of symbols) {
             const tickId = symbol.replace('/', '_').toLowerCase();
             const extDepth = await bitbank.getDepth(tickId).toPromise();
             tickers[symbol] = {
@@ -57,7 +55,7 @@ export class Aggregator {
               datetime: '',
               high: 0,
               low: 0,
-              info: {}
+              info: {},
             };
           }
           return tickers;

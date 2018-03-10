@@ -109,7 +109,7 @@ export class TriangularArbitrage extends Event {
       if (!exchange) {
         return;
       }
-      let allTickers = await this.aggregator.getAllTickers(exchange, tickers);
+      const allTickers = await this.aggregator.getAllTickers(exchange, tickers);
       if (!allTickers) {
         return;
       }
@@ -133,8 +133,8 @@ export class TriangularArbitrage extends Event {
 
       const output = candidates.length > 5 ? candidates.slice(0, 5) : candidates.slice(0, candidates.length);
       for (const candidate of output) {
-        const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate)
-        const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id
+        const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate);
+        const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id;
         logger.info(`路径：${clc.cyanBright(path)} 利率: ${clcRate}`);
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
