@@ -1,4 +1,5 @@
 import * as types from '../type';
+import { Rate } from '../rate';
 import { BigNumber } from 'bignumber.js';
 import * as bitbank from 'bitbank-handler';
 
@@ -219,28 +220,25 @@ export class Helper {
    */
   static getBaseAmountByBC(triangle: types.ITriangle, freeAmount: BigNumber) {
     const { a, b, c } = triangle;
-    // 购买C的成本
-    let b2cCost, c2aCost;
-    if (triangle.b.side.toLowerCase() === 'buy') {
-      // B2C_cost_coinA = B2C_volumn / B2C_price x C2A_price
-      b2cCost = new BigNumber(b.quantity).div(b.price).times(c.price);
-      // 换回A的成本
-      // C2A_cost = C2A_volumn * C2A_price
-      c2aCost = new BigNumber(c.quantity).times(c.price);
-    } else {
-      // B2C_cost_coinA = B2C_volumn * B2C_ask_price / A2B_price
-      b2cCost = new BigNumber(b.quantity).times(b.price).div(a.price);
-      // 换回A的成本
-      // C2A_cost = C2A_volumn * C2A_price
-      c2aCost = new BigNumber(c.quantity).times(c.price);
-    }
-    // 购买C的成本 <= 换回A的成本 && 购买C的成本 <= 可用余额
-    if (b2cCost.isLessThanOrEqualTo(c2aCost) && b2cCost.isLessThanOrEqualTo(freeAmount)) {
-      // 购买C的成本
-      return b2cCost;
-    } else if (c2aCost.isLessThanOrEqualTo(freeAmount)) {
-      // 换回A的成本 <= 可用余额
-      return c2aCost;
+    // C点到A点的数量
+    const c2aAmount = Helper.getConvertedAmount({
+      side: triangle.c.side,
+      exchangeRate: triangle.c.price,
+      amount: triangle.b.quantity
+    });
+    // 换回A点的数量
+    const dAmount = Helper.getConvertedAmount({
+      side: triangle.c.side,
+      exchangeRate: triangle.c.price,
+      amount: triangle.c.quantity
+    });
+    // 购买C的数量 <= 换回A的数量 && 购买C的数量 <= 可用余额
+    if (c2aAmount.isLessThanOrEqualTo(dAmount) && c2aAmount.isLessThanOrEqualTo(freeAmount)) {
+      // C点的数量
+      return c2aAmount;
+    } else if (c2aAmount.isLessThanOrEqualTo(freeAmount)) {
+      // 换回A的数量 <= 可用余额
+      return new BigNumber(dAmount);
     }
     return freeAmount;
   }
@@ -260,16 +258,16 @@ export class Helper {
       total = amount.times(price);
       // 总价 <= 最小成交价
       if (total.isLessThanOrEqualTo(bigCost)) {
-        // 确保交易成功，增加5%
-        resetAmount = bigCost.times(1.05).div(price);
+        // 确保交易成功，增加20%
+        resetAmount = bigCost.times(1.2).div(price);
       }
     } else {
       scale = precision.price;
       total = amount.div(price);
       // 总价 <= 最小成交价
       if (total.isLessThanOrEqualTo(bigCost)) {
-        // 确保交易成功，增加5%
-        resetAmount = bigCost.times(1.05).times(price);
+        // 确保交易成功，增加20%
+        resetAmount = bigCost.times(1.2).times(price);
       }
     }
     if (!resetAmount) {
@@ -278,5 +276,12 @@ export class Helper {
     const fmtAmount = new BigNumber(resetAmount.toFixed(scale))
     // 格式化购买数量
     return fmtAmount.isZero() ? resetAmount : fmtAmount;
+  }
+
+  /**
+   * 获取转换后的数量
+   */
+  static getConvertedAmount(rateQuote: types.IRateQuote) {
+    return Rate.convert(rateQuote);
   }
 }

@@ -102,7 +102,7 @@ export class TriangularArbitrage extends Event {
   // 套利测算
   async estimate(tickers?: types.Binance24HrTicker[]) {
     const timer = Helper.getTimer();
-    logger.info('----- 套利测算 -----');
+    logger.info(clc.magentaBright('----- 套利测算 -----'));
     logger.debug('监视行情[开始]');
     try {
       const exchange = this.exchanges.get(this.activeExchangeId);
