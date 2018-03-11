@@ -22,6 +22,19 @@ export class ApiHandler {
     }
   }
 
+  async getFreeAmount(exchange: types.IExchange, coin: string) {
+    const balances = await this.getBalance(exchange);
+    if (!balances) {
+      return;
+    }
+    const asset = balances[coin];
+    if (!asset) {
+      logger.debug(`未查找到持有${coin}！！`);
+      return;
+    }
+    return asset.free;
+  }
+
   async createOrder(exchange: types.IExchange, order: types.IOrder): Promise<ccxt.Order | undefined> {
     const api = <ccxt.Exchange>exchange.endpoint.private;
     if (!api) {

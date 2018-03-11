@@ -237,7 +237,7 @@ export class Trading extends ApiHandler {
           if (this.worker) {
             clearInterval(this.worker);
           }
-          testTrade.b.amount = orderRes.amount;
+          testTrade.a.amount = orderRes.amount;
           await this.orderB(exchange, testTrade);
           return true;
         }
@@ -258,6 +258,8 @@ export class Trading extends ApiHandler {
     logger.info(`第二步：${clc.blueBright(trade.b.pair)}`);
     try {
       const tradeB = trade.b;
+
+      // this.getFreeAmount(exchange)
       logger.info(`限价：${tradeB.price}, 数量：${tradeB.amount}, 方向：${tradeB.side}`);
       const order = <types.IOrder>{
         symbol: tradeB.pair,
@@ -284,7 +286,7 @@ export class Trading extends ApiHandler {
           if (this.worker) {
             clearInterval(this.worker);
           }
-          trade.c.amount = orderRes.amount;
+          trade.b.amount = orderRes.amount;
           await this.orderC(exchange, trade);
           return true;
         }
