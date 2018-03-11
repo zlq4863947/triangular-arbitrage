@@ -1,0 +1,56 @@
+{
+  // 使用 IntelliSense 了解相关属性。 
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Mocha Tests",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-u",
+        "tdd",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/dist/**/trading.test.js"
+      ],
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Program",
+      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\start.js",
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch WS",
+      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\ws.js",
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "launode",
+      "program": "${workspaceFolder}\\dist\\test\\serv.js",
+      "outFiles": [
+        "${workspaceFolder}/dist/test/**/*.js"
+      ]
+    }
+  ]
+}

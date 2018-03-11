@@ -2,7 +2,7 @@ import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
 import { Aggregator } from './aggregator';
-import { BigNumber } from 'BigNumber.js';
+import { BigNumber } from 'bignumber.js';
 import * as types from './type';
 
 const clc = require('cli-color');
@@ -58,7 +58,7 @@ export class TriangularArbitrage extends Event {
     }
   }
 
-  private async initExchange(exchangeId: types.ExchangeId) {
+  public async initExchange(exchangeId: types.ExchangeId) {
     const timer = Helper.getTimer();
     logger.debug('初始化交易所[启动]');
     try {
@@ -102,14 +102,14 @@ export class TriangularArbitrage extends Event {
   // 套利测算
   async estimate(tickers?: types.Binance24HrTicker[]) {
     const timer = Helper.getTimer();
-    logger.info('----- 套利测算 -----');
+    logger.info(clc.magentaBright('----- 套利测算 -----'));
     logger.debug('监视行情[开始]');
     try {
       const exchange = this.exchanges.get(this.activeExchangeId);
       if (!exchange) {
         return;
       }
-      let allTickers = await this.aggregator.getAllTickers(exchange, tickers);
+      const allTickers = await this.aggregator.getAllTickers(exchange, tickers);
       if (!allTickers) {
         return;
       }
@@ -133,8 +133,8 @@ export class TriangularArbitrage extends Event {
 
       const output = candidates.length > 5 ? candidates.slice(0, 5) : candidates.slice(0, candidates.length);
       for (const candidate of output) {
-        const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate)
-        const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id
+        const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate);
+        const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id;
         logger.info(`路径：${clc.cyanBright(path)} 利率: ${clcRate}`);
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);

@@ -22,8 +22,6 @@ export interface IEdge {
   price: number;
   // 最佳数量
   quantity: number;
-  // 兑换率
-  conversionRate: number;
 }
 
 /**
@@ -39,4 +37,24 @@ export interface ITriangle {
   rate: number;
   // 时间戳
   ts: number;
+}
+
+export interface IPrecision {
+  // 数量精度
+  amount: number;
+  // 价格精度
+  price: number;
+  // 最小成交金额
+  cost?: number;
+}
+
+/**
+ * 兑换报价对象
+ */
+export interface IRateQuote {
+  side: 'sell' | 'buy';
+  // 兑换率
+  exchangeRate: number;
+  // 数量
+  amount: number;
 }

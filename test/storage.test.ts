@@ -1,14 +1,14 @@
 import * as assert from 'power-assert';
 import { Helper } from '../src/lib/common';
 import { Storage } from '../src/lib/storage';
+import { BigNumber } from 'bignumber.js';
 import * as types from '../src/lib/type';
 import * as PouchDB from 'pouchdb';
 import * as find from 'pouchdb-find';
 PouchDB.plugin(find);
 
-const storage = new Storage();
-
 const testPutDb = async () => {
+  const storage = new Storage();
   const doc = {
     _id: 'mittens2',
     name: 'Mittens',
@@ -16,7 +16,7 @@ const testPutDb = async () => {
     age: 3,
     hobbies: ['playing with balls of yarn', 'chasing laser pointers', 'lookin hella cute'],
   };
-  const res = await storage.removeAllDocs();
+  const res = await storage.rank.removeAllDocs();
   console.log(res);
   // const res = await storage.pouchDB.put(doc)
   // console.log('res: ', res)
@@ -43,6 +43,71 @@ const testPutDb = async () => {
   console.log('findData: ', findData.docs);*/
 };
 
+const testRank = async () => {
+  const storage = new Storage();
+  const ranks: types.IRank[] = [];
+  const rank: types.IRank = {
+    stepA: 'ETH/BTC',
+    stepB: 'DLT/ETH',
+    stepC: 'DLT/BTC',
+    rate: 0.05,
+    fee: [0.005, 0.0025],
+    profitRate: [0.045, 0.0475],
+    ts: 1520516680000,
+  };
+  ranks.push(rank);
+  await storage.rank.putRanks(ranks);
+  const res = await storage.rank.getAllDocs();
+  console.log(res);
+};
+
+const testTrade = async () => {
+  const storage = new Storage();
+  const trades: types.ITradeTriangle[] = [];
+  const trade: types.ITradeTriangle = {
+    "_id": "1520516680001",
+    "coin": "BTC2",
+    "a": {
+      "pair": "1ETH/BTC",
+      "side": "buy",
+      "fee": "0.00001001 ETH",
+      "amount": 0.01000962,
+      "bigAmount": new BigNumber("0.010009615"),
+      "price": 0.078203,
+      "timecost": "2.84 ms"
+    },
+    "b": {
+      "pair": "OMG/ETH",
+      "side": "buy",
+      "fee": "0.00051117 OMG",
+      "amount": 0.51117393,
+      "bigAmount": new BigNumber("0.511173928"),
+      "price": 0.0196,
+      "timecost": "549 μs"
+    },
+    "c": {
+      "pair": "OMG/BTC",
+      "side": "sell",
+      "fee": "0.00000078 BTC",
+      "amount": 0.00078156,
+      "bigAmount": new BigNumber("0.0078155766"),
+      "price": 0.001534,
+      "timecost": "716 μs"
+    },
+    "before": 0.00078278,
+    "after": 0.00078156,
+    "profit": "-0.00000122",
+    "rate": "-0.156%",
+    ts: 1520516680000,
+  };
+  trades.push(trade);
+  await storage.trade.putTrades(trades);
+  const res = await storage.trade.getAllDocs();
+  console.log(JSON.stringify(res, null, 2));
+};
+
 describe('存储测试', () => {
-  it('测试pouchdb', testPutDb);
+  // it('测试pouchdb', testPutDb);
+  // it('测试Rank', testRank);
+  it('测试Trade', testTrade);
 });

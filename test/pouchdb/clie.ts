@@ -4,8 +4,8 @@ import { Storage } from '../../src/lib/storage';
 const storage = new Storage();
 
 (async () => {
-  storage.onChanged(async (change: any) => {
-    const docs = await storage.pouchDB.allDocs({
+  storage.rank.onChanged(async (change: any) => {
+    const docs = await storage.rank.allDocs({
       include_docs: true,
       attachments: true,
     });

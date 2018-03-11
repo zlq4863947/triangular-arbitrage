@@ -42,9 +42,9 @@ export class WebService {
       server.listen(port, () => {
         logger.info('服务已开启！');
         logger.info('请使用浏览器打开: http://127.0.0.1:' + port);
-        that.storage.onChanged(async (change: any) => {
-          const docs = await that.storage.getAllDocs();
-          for (let ws of that.connected) {
+        that.storage.rank.onChanged(async (change: any) => {
+          const docs = await that.storage.rank.getAllDocs();
+          for (const ws of that.connected) {
             if (ws) {
               ws.emit('updateArbitage', docs);
             }

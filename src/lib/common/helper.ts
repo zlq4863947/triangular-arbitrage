@@ -1,5 +1,6 @@
 import * as types from '../type';
-import { BigNumber } from 'BigNumber.js';
+import { Rate } from '../rate';
+import { BigNumber } from 'bignumber.js';
 import * as bitbank from 'bitbank-handler';
 
 const ccxt = require('ccxt');
@@ -180,7 +181,107 @@ export class Helper {
     timer.start();
     return timer;
   }
+
   static endTimer(timer: any) {
     return timer.stop().words;
+  }
+
+  /**
+   * 获取价格精度
+   */
+  static getPriceScale(pairs: types.IPairs, pairName: string): types.IPrecision | undefined {
+    const symbol = pairs[pairName];
+    if (!symbol) {
+      return;
+    }
+    return {
+      amount: symbol.precision.amount,
+      price: symbol.precision.price,
+      cost: symbol.limits.cost ? symbol.limits.cost.min : undefined
+    };
+  }
+
+  /**
+   * 获取基础货币交易额度
+   */
+  static getBaseTradeAmount(tradeAmount: BigNumber, freeAmount: BigNumber) {
+    // 如果A点交易额 x 50% < 该资产可用额度
+    if (tradeAmount.times(0.5).isLessThan(freeAmount)) {
+      // 返回交易额 x 50%
+      return tradeAmount.times(0.5);
+    }
+    // 返回可用额度 x 50%
+    return freeAmount.times(0.5);
+  }
+
+  /**
+   * 获取基础货币交易额度（通过B和C和可用余额取最小）
+   * @see https://github.com/zlq4863947/triangular-arbitrage/issues/13
+   */
+  static getBaseAmountByBC(triangle: types.ITriangle, freeAmount: BigNumber) {
+    const { a, b, c } = triangle;
+    // C点到A点的数量
+    const c2aAmount = Helper.getConvertedAmount({
+      side: triangle.c.side,
+      exchangeRate: triangle.c.price,
+      amount: triangle.b.quantity
+    });
+    // 换回A点的数量
+    const dAmount = Helper.getConvertedAmount({
+      side: triangle.c.side,
+      exchangeRate: triangle.c.price,
+      amount: triangle.c.quantity
+    });
+    // 购买C的数量 <= 换回A的数量 && 购买C的数量 <= 可用余额
+    if (c2aAmount.isLessThanOrEqualTo(dAmount) && c2aAmount.isLessThanOrEqualTo(freeAmount)) {
+      // C点的数量
+      return c2aAmount;
+    } else if (c2aAmount.isLessThanOrEqualTo(freeAmount)) {
+      // 换回A的数量 <= 可用余额
+      return new BigNumber(dAmount);
+    }
+    return freeAmount;
+  }
+
+  /**
+   * 格式化成交金额
+   */
+  static formatTradeAmount(amount: BigNumber, price: number, side: string, precision: types.IPrecision) {
+    if (!precision.cost) {
+      return amount;
+    }
+
+    const bigCost = new BigNumber(precision.cost);
+    let total, resetAmount, scale;
+    if (side.toLowerCase() === 'buy') {
+      scale = precision.amount;
+      total = amount.times(price);
+      // 总价 <= 最小成交价
+      if (total.isLessThanOrEqualTo(bigCost)) {
+        // 确保交易成功，增加20%
+        resetAmount = bigCost.times(1.2).div(price);
+      }
+    } else {
+      scale = precision.price;
+      total = amount.div(price);
+      // 总价 <= 最小成交价
+      if (total.isLessThanOrEqualTo(bigCost)) {
+        // 确保交易成功，增加20%
+        resetAmount = bigCost.times(1.2).times(price);
+      }
+    }
+    if (!resetAmount) {
+      resetAmount = amount;
+    }
+    const fmtAmount = new BigNumber(resetAmount.toFixed(scale))
+    // 格式化购买数量
+    return fmtAmount.isZero() ? resetAmount : fmtAmount;
+  }
+
+  /**
+   * 获取转换后的数量
+   */
+  static getConvertedAmount(rateQuote: types.IRateQuote) {
+    return Rate.convert(rateQuote);
   }
 }

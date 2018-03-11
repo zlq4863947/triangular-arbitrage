@@ -6,7 +6,7 @@
 ### 画面配置
 ###
 [display]
-  maxRows = 40 
+  maxRows = 40
 
 ###
 ### [exchange]
@@ -27,7 +27,7 @@
   # 币安时无视此项，tickers取得间隔固定（1秒）
   interval = 1
   # 最小盈利率
-  minRateProfit = 0.1
+  minRateProfit = 0.05
 
 ###
 ### [log]
@@ -43,10 +43,10 @@
 ###
 [storage]
   # PouchDB数据库URL(没有可以填空字符串)
-  #url = "http://localhost:5984"
+  #url = "http://127.0.0.1:5984"
   url = ""
   # 是否存储用以显示的tick排行数据
-  tickRank = true
+  tickRank = false
 
 ###
 ### [trading]
@@ -57,6 +57,8 @@
   # minQueueRateThreshold = 3
   # 有多少相同机会的阈值
   # minHitsThreshold = 5
+  # 是否只进行模拟交易
+  mock = false
 
 ###
 ### [account]
@@ -72,13 +74,11 @@
   # binance
   [account.binance]
     # 账号
-    # apiKey = "aa"
-    # secret = "zz"
     apiKey = "cc"
     secret = "xx"
 
   # bitbank
   [account.bitbank]
     # 账号
-    apiKey = "zzxc"
-    secret = "awq"
+    apiKey = "xxx"
+    secret = "ccc"
