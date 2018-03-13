@@ -53,12 +53,10 @@
 ### 交易相关配置
 ###
 [trading]
-  # 只有超过 x% 最小盈利率(minimalProfit)的候选人,排队等待交易
-  # minQueueRateThreshold = 3
-  # 有多少相同机会的阈值
-  # minHitsThreshold = 5
   # 是否只进行模拟交易
   mock = false
+  # 最大同时进行的交易会话数
+  limit = 1
 
 ###
 ### [account]

@@ -2,6 +2,7 @@ import { BigNumber } from 'bignumber.js';
 import * as ccxt from 'ccxt';
 import { logger, Helper } from './common';
 import { ApiHandler } from './api-handler';
+import { Storage } from './storage';
 import * as types from './type';
 
 const clc = require('cli-color');
@@ -9,7 +10,13 @@ const config = require('config');
 
 export class Trading extends ApiHandler {
   balances!: types.IBalances;
+  storage: Storage;
   private worker = 0;
+
+  constructor() {
+    super();
+    this.storage = new Storage();
+  }
 
   /**
    * 模拟每个边的交易信息
@@ -176,6 +183,7 @@ export class Trading extends ApiHandler {
       logger.info(`订单可行性检测结果，利润(${clc.redBright(tradeTriangle.profit)})为负数，终止下单！`);
       return;
     }
+    tradeTriangle.id = triangle.id;
     // 利率
     tradeTriangle.rate =
       profit
@@ -237,6 +245,7 @@ export class Trading extends ApiHandler {
           if (this.worker) {
             clearInterval(this.worker);
           }
+          // 修正数量
           testTrade.a.amount = orderRes.amount;
           await this.orderB(exchange, testTrade);
           return true;
@@ -334,7 +343,12 @@ export class Trading extends ApiHandler {
             clearInterval(this.worker);
           }
           logger.info(`三角套利完成,最终获得：${orderRes.amount}...`);
-          return true;
+          // 记录交易信息
+          // 在交易队列中清除这条数据
+          return this.storage.queue.removeQueue({
+            triangleId: trade.id,
+            exchange: config.exchange.active,
+          });
         }
         return false;
       };

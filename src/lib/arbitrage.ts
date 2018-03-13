@@ -1,6 +1,7 @@
 import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
+import { Queue } from './storage/queue';
 import { Aggregator } from './aggregator';
 import { BigNumber } from 'bignumber.js';
 import * as types from './type';
@@ -17,12 +18,15 @@ export class TriangularArbitrage extends Event {
   engine: Engine;
   // 集计数据提供
   aggregator: Aggregator;
+  // 交易会话队列
+  tradingQueue: Queue;
 
   constructor() {
     super();
     this.activeExchangeId = <types.ExchangeId>config.exchange.active;
     this.engine = new Engine();
     this.aggregator = new Aggregator();
+    this.tradingQueue = new Queue(config.storage.url);
   }
 
   async start(activeExchangeId?: types.ExchangeId) {
@@ -102,9 +106,14 @@ export class TriangularArbitrage extends Event {
   // 套利测算
   async estimate(tickers?: types.Binance24HrTicker[]) {
     const timer = Helper.getTimer();
-    logger.info(clc.magentaBright('----- 套利测算 -----'));
     logger.debug('监视行情[开始]');
     try {
+      const queue = await this.tradingQueue.info();
+      if (queue && queue.doc_count >= config.trading.limit) {
+        logger.debug('交易会话数已到限制数!!');
+        return;
+      }
+      logger.info(clc.magentaBright('----- 套利测算 -----'));
       const exchange = this.exchanges.get(this.activeExchangeId);
       if (!exchange) {
         return;
