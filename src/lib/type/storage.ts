@@ -29,7 +29,6 @@ export interface ITradeEdge {
 }
 
 export interface ITradeTriangle {
-  _id?: string;
   a: ITradeEdge;
   b: ITradeEdge;
   c: ITradeEdge;
@@ -42,4 +41,17 @@ export interface ITradeTriangle {
   profit: string;
   rate: string;
   ts: number;
+}
+
+export interface ITrade {
+  _id?: string;
+  real?: ITradeTriangle;
+  mock: ITradeTriangle;
+}
+
+export interface IQueue {
+  _id?: string;
+  triangleId: string;
+  exchange: string;
+  ts?: number;
 }

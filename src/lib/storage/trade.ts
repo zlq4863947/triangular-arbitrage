@@ -4,7 +4,7 @@ import { StorageBase } from './base';
 const config = require('config');
 
 export class Trade extends StorageBase {
-  static id = 'db/trade';
+  static id = 'trade';
 
   constructor(url: string) {
     super(url + Trade.id);

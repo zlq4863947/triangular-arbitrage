@@ -3,11 +3,14 @@ import { logger } from '../common';
 
 export class StorageBase extends PouchDB {
   constructor(url: string) {
-    super(url);
+    super(url, <any>{
+      prefix: './db/'
+    });
   }
 
   /**
    * 存储数据
+   * @todo 存储放到待修改
    * @param rows
    */
   async putRows(rows: { [attr: string]: any }[]) {
@@ -22,6 +25,22 @@ export class StorageBase extends PouchDB {
         }
       }
       return await this.bulkDocs(rows);
+    } catch (err) {
+      logger.error(`存储数据集出错: ${err.message}`);
+    }
+  }
+
+  async putRow(row: { [attr: string]: any }) {
+    try {
+      const docs = await this.allDocs({
+        include_docs: true,
+        attachments: true,
+      });
+      if (!docs) {
+        return;
+      }
+      const dbRow = Object.assign({}, docs.rows.find(o => o.id === row.id), row);
+      return await this.put(dbRow);
     } catch (err) {
       logger.error(`存储数据出错: ${err.message}`);
     }
