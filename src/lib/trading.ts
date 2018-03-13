@@ -110,6 +110,7 @@ export class Trading extends ApiHandler {
 
     const tradeTriangle = <types.ITradeTriangle>{
       coin: triangle.a.coinFrom,
+      exchange: config.exchange.active
     };
 
     const asset = this.balances[tradeTriangle.coin];
@@ -216,6 +217,9 @@ export class Trading extends ApiHandler {
       logger.info('----- 套利开始 -----');
       logger.info(`路径：${clc.cyanBright(triangle.id)} 利率: ${triangle.rate}`);
 
+      // 放入交易队列
+      await this.storage.openTradingSession(testTrade);
+
       // 获取交易额度
       logger.info(`第一步：${clc.blueBright(triangle.a.pair)}`);
       const tradeA = testTrade.a;
@@ -268,6 +272,9 @@ export class Trading extends ApiHandler {
     try {
       const tradeB = trade.b;
 
+      // 更新队列和交易信息
+      await this.storage.updateTradingSession(trade, 1);
+
       // this.getFreeAmount(exchange)
       logger.info(`限价：${tradeB.price}, 数量：${tradeB.amount}, 方向：${tradeB.side}`);
       const order = <types.IOrder>{
@@ -316,6 +323,8 @@ export class Trading extends ApiHandler {
     logger.info(`第三步：${clc.blueBright(trade.c.pair)}`);
     try {
       const tradeC = trade.c;
+      // 更新队列和交易信息
+      await this.storage.updateTradingSession(trade, 2);
       logger.info(`限价：${tradeC.price}, 数量：${tradeC.amount}, 方向：${tradeC.side}`);
       const order = <types.IOrder>{
         symbol: tradeC.pair,
@@ -343,12 +352,8 @@ export class Trading extends ApiHandler {
             clearInterval(this.worker);
           }
           logger.info(`三角套利完成,最终获得：${orderRes.amount}...`);
-          // 记录交易信息
           // 在交易队列中清除这条数据
-          return this.storage.queue.removeQueue({
-            triangleId: trade.id,
-            exchange: config.exchange.active,
-          });
+          await this.storage.closeTradingSession(trade);
         }
         return false;
       };

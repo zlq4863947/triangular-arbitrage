@@ -10,52 +10,43 @@ export class Queue extends StorageBase {
     super(url + Queue.id);
   }
 
-  private getId(queue: types.IQueue) {
-    return queue.exchange + '_' + queue.triangleId;
-  }
-
   async addQueue(queue: types.IQueue) {
     try {
-      if (!queue._id) {
-        queue._id = this.getId(queue);
-      }
       if (!queue.ts) {
         queue.ts = Date.now();
       }
       logger.debug('存入队列数据：' + JSON.stringify(queue));
-      return await this.put(queue);
+      return await this.post(queue);
     } catch (err) {
       logger.error(`存储队列数据出错: ${err.message}`);
     }
   }
 
-  async getQueue(queue: types.IQueue) {
-
-    const docs = await this.allDocs({
-      include_docs: true,
-      attachments: true,
+  async getQueue(trade: types.ITradeTriangle) {
+    const queueRes = await this.findQueue({
+      selector: {
+        triangleId: trade.id,
+        exchange: trade.exchange
+      }
     });
-    if (!docs) {
+    // 队列中triangleId和exchange组合key是唯一的
+    if (!queueRes || queueRes.docs.length !== 1) {
       return;
     }
-    const id = this.getId(queue);
-    return docs.rows.find(o => o.id === id);
+    return <types.IQueue>queueRes.docs[0];
   }
 
-  async removeQueue(queue: types.IQueue) {
+  async findQueue(selecter: { [attr: string]: any }) {
+    await this.createIndex({
+      index: {
+        fields: ['triangleId']
+      }
+    })
+    return await this.find({ selector: selecter });
+  }
 
-    const docs = await this.allDocs({
-      include_docs: true,
-      attachments: true,
-    });
-    if (!docs) {
-      return;
-    }
-    const id = this.getId(queue);
-    const row = docs.rows.find(o => o.id === id);
-    if (!row || !row.doc) {
-      return;
-    }
-    await this.remove(row.doc._id, row.doc._rev);
+  async removeQueue(id: string) {
+    const doc = await this.get(id);
+    return await this.remove(doc);
   }
 }

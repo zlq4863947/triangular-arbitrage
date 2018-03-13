@@ -36,6 +36,7 @@ export interface ITradeTriangle {
   c: ITradeEdge;
   // 套利货币
   coin: string;
+  exchange: string;
   // 起始买入资金
   before: number;
   // 套利后获得资金
@@ -45,6 +46,8 @@ export interface ITradeTriangle {
   ts: number;
 }
 
+export type tradeStep = 0 | 1 | 2;
+
 export interface ITrade {
   _id?: string;
   real?: ITradeTriangle;
@@ -53,7 +56,9 @@ export interface ITrade {
 
 export interface IQueue {
   _id?: string;
+  _rev?: string;
   triangleId: string;
   exchange: string;
+  step: tradeStep;
   ts?: number;
 }

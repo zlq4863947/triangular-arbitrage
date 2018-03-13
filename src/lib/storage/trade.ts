@@ -10,7 +10,7 @@ export class Trade extends StorageBase {
     super(url + Trade.id);
   }
 
-  async putTrades(trades: types.ITradeTriangle[]) {
+  async putTrades(trades: types.ITrade[]) {
     try {
       logger.debug('存入交易数据，大小：' + trades.length);
       return await this.bulkDocs(trades);

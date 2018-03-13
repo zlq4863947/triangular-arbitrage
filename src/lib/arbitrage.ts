@@ -109,7 +109,8 @@ export class TriangularArbitrage extends Event {
     logger.debug('监视行情[开始]');
     try {
       const queue = await this.tradingQueue.info();
-      if (queue && queue.doc_count >= config.trading.limit) {
+      // 减去index数据
+      if (queue && queue.doc_count - 1 >= config.trading.limit) {
         logger.debug('交易会话数已到限制数!!');
         return;
       }

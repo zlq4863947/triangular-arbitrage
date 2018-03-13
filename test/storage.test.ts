@@ -56,9 +56,26 @@ const testRank = async () => {
     ts: 1520516680000,
   };
   ranks.push(rank);
-  await storage.rank.putRanks(ranks);
+  const putRes = await storage.rank.post(rank);
+  assert(putRes.id)
+  // const putRes = await storage.rank.putRanks(ranks);
+  console.log('putRes: ', JSON.stringify(putRes, null, 2))
   const res = await storage.rank.getAllDocs();
   console.log(res);
+};
+
+const testQueue = async () => {
+  const storage = new Storage();
+  const queue: types.IQueue = {
+    triangleId: 'BTC-ETH-DLT',
+    exchange: 'binance',
+    step: 0
+  };
+  const res2 = await storage.queue.addQueue(queue);
+  const res = await storage.queue.findQueue(queue)
+  assert(res)
+  // const putRes = await storage.rank.putRanks(ranks);
+  console.log('putRes: ', JSON.stringify(res, null, 2))
 };
 
 const testTrade = async () => {
@@ -108,6 +125,7 @@ const testTrade = async () => {
 
 describe('存储测试', () => {
   // it('测试pouchdb', testPutDb);
-  it('测试Rank', testRank);
+  // it('测试Rank', testRank);
+  it('测试queue', testQueue);
   // it('测试Trade', testTrade);
 });
