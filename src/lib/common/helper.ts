@@ -1,5 +1,6 @@
 import * as types from '../type';
 import { Rate } from '../rate';
+import { Queue } from '../storage/queue';
 import { BigNumber } from 'bignumber.js';
 import * as bitbank from 'bitbank-handler';
 
@@ -197,7 +198,7 @@ export class Helper {
     return {
       amount: symbol.precision.amount,
       price: symbol.precision.price,
-      cost: symbol.limits.cost ? symbol.limits.cost.min : undefined
+      cost: symbol.limits.cost ? symbol.limits.cost.min : undefined,
     };
   }
 
@@ -224,13 +225,13 @@ export class Helper {
     const c2aAmount = Helper.getConvertedAmount({
       side: triangle.c.side,
       exchangeRate: triangle.c.price,
-      amount: triangle.b.quantity
+      amount: triangle.b.quantity,
     });
     // 换回A点的数量
     const dAmount = Helper.getConvertedAmount({
       side: triangle.c.side,
       exchangeRate: triangle.c.price,
-      amount: triangle.c.quantity
+      amount: triangle.c.quantity,
     });
     // 购买C的数量 <= 换回A的数量 && 购买C的数量 <= 可用余额
     if (c2aAmount.isLessThanOrEqualTo(dAmount) && c2aAmount.isLessThanOrEqualTo(freeAmount)) {
@@ -273,7 +274,7 @@ export class Helper {
     if (!resetAmount) {
       resetAmount = amount;
     }
-    const fmtAmount = new BigNumber(resetAmount.toFixed(scale))
+    const fmtAmount = new BigNumber(resetAmount.toFixed(scale));
     // 格式化购买数量
     return fmtAmount.isZero() ? resetAmount : fmtAmount;
   }
@@ -283,5 +284,16 @@ export class Helper {
    */
   static getConvertedAmount(rateQuote: types.IRateQuote) {
     return Rate.convert(rateQuote);
+  }
+
+  /**
+   * 检查交易队列是否超过限制
+   */
+  static async checkQueueLimit(queue: Queue) {
+    const res = await queue.info();
+    if (res && res.doc_count < config.trading.limit) {
+      return true;
+    }
+    return false;
   }
 }

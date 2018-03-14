@@ -21,58 +21,70 @@ export class Storage {
   }
 
   private async getQueue(trade: types.ITradeTriangle) {
-    const queueRes = await this.queue.findQueue({
-      selector: {
-        triangleId: trade.id,
-        exchange: trade.exchange
-      }
-    });
+    const queueRes = await this.queue.findQueue(trade.id, trade.exchange);
     // 队列中triangleId和exchange组合key是唯一的
-    if (!queueRes || queueRes.docs.length !== 1) {
+    if (!queueRes || !queueRes.doc) {
       return;
     }
-    return <types.IQueue>queueRes.docs[0];
+    return <types.IQueue>queueRes.doc;
   }
 
   /**
    * 打开交易会话
    */
-  async openTradingSession(trade: types.ITradeTriangle) {
+  async openTradingSession(trade: types.ITrade) {
     const queueInfo = await this.queue.addQueue({
-      triangleId: trade.id,
-      exchange: trade.exchange,
-      step: 0
+      triangleId: trade.mock.id,
+      exchange: trade.mock.exchange,
+      step: 0,
     });
     if (!queueInfo) {
       return;
     }
-    const tradeInput: types.ITrade = {
-      _id: queueInfo.id,
-      mock: trade
-    };
-    return await this.trade.put(tradeInput);
+    trade._id = queueInfo.id;
+    return await this.trade.put(trade);
   }
 
   async updateTradingSession(trade: types.ITradeTriangle, step: types.tradeStep) {
-
     const queue = await this.getQueue(trade);
     if (!queue || !queue._id) {
       return;
     }
     queue.step = step;
     await this.queue.put(queue);
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), trade);
+    const tradeEdgeInfo = { real: {} };
+    switch (step) {
+      case 0:
+        tradeEdgeInfo.real = {
+          a: trade
+        }
+        break;
+      case 1:
+        tradeEdgeInfo.real = {
+          b: trade
+        }
+        break;
+      case 2:
+        tradeEdgeInfo.real = {
+          c: trade
+        }
+        break;
+    }
+    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), tradeEdgeInfo);
     return await this.trade.put(tradeInfo);
   }
 
   async closeTradingSession(trade: types.ITradeTriangle) {
-
     const queue = await this.getQueue(trade);
     if (!queue || !queue._id || !queue._rev) {
       return;
     }
     await this.queue.remove(queue._id, queue._rev);
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), trade);
+    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), {
+      real: {
+        c: trade
+      }
+    });
     return await this.trade.put(tradeInfo);
   }
 }

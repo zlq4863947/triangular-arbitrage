@@ -4,7 +4,7 @@ import { logger } from '../common';
 export class StorageBase extends PouchDB {
   constructor(url: string) {
     super(url, <any>{
-      prefix: './db/'
+      prefix: './db/',
     });
   }
 
@@ -39,7 +39,7 @@ export class StorageBase extends PouchDB {
       if (!docs) {
         return;
       }
-      const dbRow = Object.assign({}, docs.rows.find(o => o.id === row.id), row);
+      const dbRow = Object.assign({}, docs.rows.find((o) => o.id === row.id), row);
       return await this.put(dbRow);
     } catch (err) {
       logger.error(`存储数据出错: ${err.message}`);

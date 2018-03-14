@@ -108,15 +108,15 @@ export class TriangularArbitrage extends Event {
     const timer = Helper.getTimer();
     logger.debug('监视行情[开始]');
     try {
-      const queue = await this.tradingQueue.info();
-      // 减去index数据
-      if (queue && queue.doc_count - 1 >= config.trading.limit) {
-        logger.debug('交易会话数已到限制数!!');
-        return;
-      }
       logger.info(clc.magentaBright('----- 套利测算 -----'));
       const exchange = this.exchanges.get(this.activeExchangeId);
       if (!exchange) {
+        return;
+      }
+      // 清理超时数据
+      await this.tradingQueue.clearQueue();
+      if (await !Helper.checkQueueLimit(this.tradingQueue)) {
+        logger.debug('交易会话数已到限制数!!');
         return;
       }
       const allTickers = await this.aggregator.getAllTickers(exchange, tickers);

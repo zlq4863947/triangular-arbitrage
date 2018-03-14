@@ -24,6 +24,8 @@ export interface ITradeEdge {
   // 报单数量(BigNumber)
   bigAmount: BigNumber;
   fee: string;
+  orderId: string;
+  status: 'open' | 'closed' | 'canceled';
   // 用时
   timecost: string;
 }
