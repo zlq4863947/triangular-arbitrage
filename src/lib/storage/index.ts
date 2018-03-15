@@ -20,8 +20,8 @@ export class Storage {
     this.queue = new Queue(this.url);
   }
 
-  private async getQueue(trade: types.ITradeTriangle) {
-    const queueRes = await this.queue.findQueue(trade.id, trade.exchange);
+  private async getQueue(tradeId: string, exchange: string) {
+    const queueRes = await this.queue.findQueue(tradeId, exchange);
     // 队列中triangleId和exchange组合key是唯一的
     if (!queueRes || !queueRes.doc) {
       return;
@@ -46,45 +46,47 @@ export class Storage {
   }
 
   async updateTradingSession(trade: types.ITradeTriangle, step: types.tradeStep) {
-    const queue = await this.getQueue(trade);
+    const queue = await this.getQueue(trade.id, trade.exchange);
     if (!queue || !queue._id) {
       return;
     }
     queue.step = step;
     await this.queue.put(queue);
-    const tradeEdgeInfo = { real: {} };
-    switch (step) {
-      case 0:
-        tradeEdgeInfo.real = {
-          a: trade
-        }
-        break;
-      case 1:
-        tradeEdgeInfo.real = {
-          b: trade
-        }
-        break;
-      case 2:
-        tradeEdgeInfo.real = {
-          c: trade
-        }
-        break;
+    const oldTrade: types.ITrade = <any>await this.trade.get(queue._id);
+    if (oldTrade.real) {
+      switch (step) {
+        case 0:
+          oldTrade.real.a = trade.a;
+          break;
+        case 1:
+          oldTrade.real.b = trade.b;
+          break;
+        case 2:
+          oldTrade.real.c = trade.c;
+          break;
+      }
+      return await this.trade.put(oldTrade);
     }
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), tradeEdgeInfo);
-    return await this.trade.put(tradeInfo);
   }
 
   async closeTradingSession(trade: types.ITradeTriangle) {
-    const queue = await this.getQueue(trade);
+    const queue = await this.getQueue(trade.id, trade.exchange);
     if (!queue || !queue._id || !queue._rev) {
       return;
     }
     await this.queue.remove(queue._id, queue._rev);
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), {
-      real: {
-        c: trade
-      }
-    });
-    return await this.trade.put(tradeInfo);
+    const oldTrade: types.ITrade = <any>await this.trade.get(queue._id);
+    if (oldTrade.real) {
+      oldTrade.real.c = trade.c;
+      return await this.trade.put(oldTrade);
+    }
+  }
+
+  async clearQueue(tradeId: string, exchange: string) {
+    const queue = await this.getQueue(tradeId, exchange);
+    if (!queue || !queue._id || !queue._rev) {
+      return;
+    }
+    await this.queue.remove(queue._id, queue._rev);
   }
 }

@@ -115,7 +115,8 @@ export class TriangularArbitrage extends Event {
       }
       // 清理超时数据
       await this.tradingQueue.clearQueue();
-      if (await !Helper.checkQueueLimit(this.tradingQueue)) {
+      const limitCheck = await Helper.checkQueueLimit(this.tradingQueue)
+      if (!limitCheck) {
         logger.debug('交易会话数已到限制数!!');
         return;
       }
@@ -149,7 +150,7 @@ export class TriangularArbitrage extends Event {
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
     } catch (err) {
-      logger.error(`监视行情[异常](${Helper.endTimer(timer)}): ${err}`);
+      logger.error(`监视行情[异常](${Helper.endTimer(timer)}): ${JSON.stringify(err)}`);
     }
   }
 }

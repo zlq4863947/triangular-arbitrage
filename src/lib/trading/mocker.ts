@@ -79,7 +79,7 @@ export class Mocker extends ApiHandler {
       tradeAmount = Helper.formatTradeAmount(tradeAmount, edge.price, edge.side, priceScale);
     }
     tradeEdge.fee = tradeAmount.times(feeRate).toFixed(8) + ' ' + edge.coinTo;
-    tradeEdge.amount = +tradeAmount.toFixed(8);
+    tradeEdge.amount = +tradeAmount.toFixed(priceScale.amount, 1);
     tradeEdge.bigAmount = tradeAmount;
     tradeEdge.price = edge.price;
     tradeEdge.timecost = Helper.endTimer(timer);

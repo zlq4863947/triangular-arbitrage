@@ -39,8 +39,8 @@ export class Trading extends ApiHandler {
 
       logger.info('----- 套利开始 -----');
       logger.info(`路径：${clc.cyanBright(triangle.id)} 利率: ${triangle.rate}`);
-
-      if (await !Helper.checkQueueLimit(this.storage.queue)) {
+      const limitCheck = await Helper.checkQueueLimit(this.storage.queue)
+      if (!limitCheck) {
         logger.debug('交易会话数已到限制数!!');
         return;
       }
@@ -62,21 +62,18 @@ export class Trading extends ApiHandler {
         price: testTrade.a.price,
         amount: testTrade.a.amount,
       };
-      /*const orderInfo = await this.createOrder(exchange, order);
+      const orderInfo = await this.createOrder(exchange, order);
       if (!orderInfo) {
         return;
       }
       logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
 
       testTrade.a.status = orderInfo.status;
-      testTrade.a.orderId = orderInfo.id;*/
-
-      testTrade.a.status = 'open';
-      testTrade.a.orderId = 'id';
+      testTrade.a.orderId = orderInfo.id;
 
       // 更新队列
       await this.storage.updateTradingSession(testTrade, 0);
-      /*const nextB = async () => {
+      const nextB = async () => {
         logger.info('执行nextB...');
         const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
         if (!orderRes) {
@@ -105,9 +102,11 @@ export class Trading extends ApiHandler {
       if (!await nextB()) {
         logger.info('订单未成交,每秒循环执行。');
         this.worker = setInterval(nextB.bind(this), 1000);
-      }*/
+      }
     } catch (err) {
       logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
+      // 退出交易队列
+      await this.storage.clearQueue(triangle.id, exchange.id);
     }
   }
 
@@ -131,12 +130,13 @@ export class Trading extends ApiHandler {
       }
       logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
 
-      trade.b.status = orderInfo.status;
+      trade.b.status = <any>orderInfo.status;
       trade.b.orderId = orderInfo.id;
       // 更新队列
       await this.storage.updateTradingSession(trade, 1);
       const nextC = async () => {
         logger.info('执行nextC...');
+
         const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
         if (!orderRes) {
           return false;
@@ -147,7 +147,6 @@ export class Trading extends ApiHandler {
           if (this.worker) {
             clearInterval(this.worker);
           }
-          trade.b.amount = orderRes.amount;
           trade.b.timecost = Helper.endTimer(timer);
           // 修正数量
           trade.b.amount = orderRes.amount;
@@ -206,7 +205,6 @@ export class Trading extends ApiHandler {
             clearInterval(this.worker);
           }
           logger.info(`三角套利完成,最终获得：${orderRes.amount}...`);
-          trade.c.amount = orderRes.amount;
           trade.c.timecost = Helper.endTimer(timer);
           // 修正数量
           trade.c.amount = orderRes.amount;
