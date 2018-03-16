@@ -105,8 +105,7 @@ export class Trading extends ApiHandler {
       }
     } catch (err) {
       logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-      // 退出交易队列
-      await this.storage.clearQueue(triangle.id, exchange.id);
+      await this.errorHandle(triangle.id, exchange.id)
     }
   }
 
@@ -166,6 +165,7 @@ export class Trading extends ApiHandler {
       }
     } catch (err) {
       logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
+      await this.errorHandle(trade.id, exchange.id)
     }
   }
 
@@ -222,6 +222,12 @@ export class Trading extends ApiHandler {
       }
     } catch (err) {
       logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
+      await this.errorHandle(trade.id, exchange.id)
     }
+  }
+
+  private async errorHandle(triangleId: string, exchangeId: string) {
+    // 退出交易队列
+    await this.storage.clearQueue(triangleId, exchangeId);
   }
 }

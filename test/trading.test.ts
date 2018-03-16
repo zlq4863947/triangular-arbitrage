@@ -50,7 +50,8 @@ const testPlaceOrder = async () => {
     '{"id":"BTC-ETH-ICX","a":{"coinFrom":"BTC","coinTo":"ETH","pair":"ETH/BTC","side":"buy","price":0.079221,"quantity":0.19},"b":{"coinFrom":"ETH","coinTo":"ICX","pair":"ICX/ETH","side":"buy","price":0.003662,"quantity":70.9},"c":{"coinFrom":"ICX","coinTo":"BTC","pair":"ICX/BTC","side":"sell","price":0.0002903,"quantity":67.56},"rate":0.06642301,"ts":1520765253834}';
   const t8 =
     '{"id":"ETH-BNB-ONT","a":{"coinFrom":"ETH","coinTo":"BNB","pair":"BNB/ETH","side":"buy","price":0.01126,"quantity":0.41},"b":{"coinFrom":"BNB","coinTo":"ONT","pair":"ONT/BNB","side":"buy","price":0.1966,"quantity":5.85},"c":{"coinFrom":"ONT","coinTo":"ETH","pair":"ONT/ETH","side":"sell","price":0.0022154,"quantity":220},"rate":0.07607119,"ts":1520782545989}';
-  const list = [t7]// [t1, t2, t3, t4, t5, t6, t7, t8];
+  const t9 = '{"id":"BNB-BTC-WABI","a":{"coinFrom":"BNB","coinTo":"BTC","pair":"BNB/BTC","side":"sell","price":0.0010959,"quantity":29.81},"b":{"coinFrom":"BTC","coinTo":"WABI","pair":"WABI/BTC","side":"buy","price":0.00009205,"quantity":3},"c":{"coinFrom":"WABI","coinTo":"BNB","pair":"WABI/BNB","side":"sell","price":0.08427,"quantity":0.72},"rate":0.32753178,"ts":1521204333027}';
+  const list = [t3]// [t1, t2, t3, t4, t5, t6, t7, t8];
   for (const t of list) {
     const triangle: types.ITriangle = JSON.parse(t);
     // for (let i = 0; i < 10; i++) {

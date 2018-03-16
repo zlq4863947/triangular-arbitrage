@@ -15,7 +15,7 @@
         "--timeout",
         "999999",
         "--colors",
-        "${workspaceFolder}/dist/**/storage.test.js"
+        "${workspaceFolder}/dist/**/trading.test.js"
       ],
       "env": {
         "NODE_ENV": "test"

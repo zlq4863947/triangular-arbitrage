@@ -216,67 +216,29 @@ export class Helper {
   }
 
   /**
-   * 获取基础货币交易额度（通过B和C和可用余额取最小）
-   * @see https://github.com/zlq4863947/triangular-arbitrage/issues/13
+   * 获取基础货币交易额度
    */
-  static getBaseAmountByBC(triangle: types.ITriangle, freeAmount: BigNumber) {
+  static getBaseAmountByBC(triangle: types.ITriangle, freeAmount: BigNumber, minAmount: BigNumber) {
     const { a, b, c } = triangle;
-    // C点到A点的数量
+    // B点的数量
+    const bAmount = Helper.convertAmount(b.price, b.quantity, b.side);
+
+    // 换回A点的数量
+    const b2aAmount = Helper.convertAmount(a.price, bAmount.toNumber(), a.side);
+    // c点数量
     const c2aAmount = Helper.getConvertedAmount({
       side: triangle.c.side,
       exchangeRate: triangle.c.price,
-      amount: triangle.b.quantity,
-    });
-    // 换回A点的数量
-    const dAmount = Helper.getConvertedAmount({
-      side: triangle.c.side,
-      exchangeRate: triangle.c.price,
       amount: triangle.c.quantity,
-    });
-    // 购买C的数量 <= 换回A的数量 && 购买C的数量 <= 可用余额
-    if (c2aAmount.isLessThanOrEqualTo(dAmount) && c2aAmount.isLessThanOrEqualTo(freeAmount)) {
-      // C点的数量
-      return c2aAmount;
-    } else if (c2aAmount.isLessThanOrEqualTo(freeAmount)) {
-      // 换回A的数量 <= 可用余额
-      return new BigNumber(dAmount);
-    }
-    return freeAmount;
-  }
+    })
 
-  /**
-   * 格式化成交金额
-   */
-  static formatTradeAmount(amount: BigNumber, price: number, side: string, precision: types.IPrecision) {
-    if (!precision.cost) {
-      return amount;
+    // 选取数量最大的
+    const thanAmount = b2aAmount.isGreaterThan(c2aAmount) ? b2aAmount : c2aAmount;
+    // 选取数量 > 最小交易量 && 选取数量 < 可用余额
+    if (thanAmount.isGreaterThan(minAmount) && thanAmount.isLessThan(freeAmount)) {
+      return thanAmount;
     }
-
-    const bigCost = new BigNumber(precision.cost);
-    let total, resetAmount, scale;
-    if (side.toLowerCase() === 'buy') {
-      scale = precision.amount;
-      total = amount.times(price);
-      // 总价 <= 最小成交价
-      if (total.isLessThanOrEqualTo(bigCost)) {
-        // 确保交易成功，增加20%
-        resetAmount = bigCost.times(1.2).div(price);
-      }
-    } else {
-      scale = precision.price;
-      total = amount.div(price);
-      // 总价 <= 最小成交价
-      if (total.isLessThanOrEqualTo(bigCost)) {
-        // 确保交易成功，增加20%
-        resetAmount = bigCost.times(1.2).times(price);
-      }
-    }
-    if (!resetAmount) {
-      resetAmount = amount;
-    }
-    const fmtAmount = new BigNumber(resetAmount.toFixed(scale));
-    // 格式化购买数量
-    return fmtAmount.isZero() ? resetAmount : fmtAmount;
+    return minAmount;
   }
 
   /**
@@ -284,6 +246,16 @@ export class Helper {
    */
   static getConvertedAmount(rateQuote: types.IRateQuote) {
     return Rate.convert(rateQuote);
+  }
+
+  /**
+   * 转换获取指定总价（标的货币数量）时，需要的交易数量
+   * @param price 价格
+   * @param cost 总价
+   * @param side 方向
+   */
+  static convertAmount(price: number, cost: number, side: 'sell' | 'buy') {
+    return Rate.convertAmount(price, cost, side);
   }
 
   /**
