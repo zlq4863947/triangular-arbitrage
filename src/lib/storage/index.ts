@@ -20,59 +20,73 @@ export class Storage {
     this.queue = new Queue(this.url);
   }
 
-  private async getQueue(trade: types.ITradeTriangle) {
-    const queueRes = await this.queue.findQueue({
-      selector: {
-        triangleId: trade.id,
-        exchange: trade.exchange
-      }
-    });
+  private async getQueue(tradeId: string, exchange: string) {
+    const queueRes = await this.queue.findQueue(tradeId, exchange);
     // 队列中triangleId和exchange组合key是唯一的
-    if (!queueRes || queueRes.docs.length !== 1) {
+    if (!queueRes || !queueRes.doc) {
       return;
     }
-    return <types.IQueue>queueRes.docs[0];
+    return <types.IQueue>queueRes.doc;
   }
 
   /**
    * 打开交易会话
    */
-  async openTradingSession(trade: types.ITradeTriangle) {
+  async openTradingSession(trade: types.ITrade) {
     const queueInfo = await this.queue.addQueue({
-      triangleId: trade.id,
-      exchange: trade.exchange,
-      step: 0
+      triangleId: trade.mock.id,
+      exchange: trade.mock.exchange,
+      step: 0,
     });
     if (!queueInfo) {
       return;
     }
-    const tradeInput: types.ITrade = {
-      _id: queueInfo.id,
-      mock: trade
-    };
-    return await this.trade.put(tradeInput);
+    trade._id = queueInfo.id;
+    return await this.trade.put(trade);
   }
 
   async updateTradingSession(trade: types.ITradeTriangle, step: types.tradeStep) {
-
-    const queue = await this.getQueue(trade);
+    const queue = await this.getQueue(trade.id, trade.exchange);
     if (!queue || !queue._id) {
       return;
     }
     queue.step = step;
     await this.queue.put(queue);
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), trade);
-    return await this.trade.put(tradeInfo);
+    const oldTrade: types.ITrade = <any>await this.trade.get(queue._id);
+    if (oldTrade.real) {
+      switch (step) {
+        case 0:
+          oldTrade.real.a = trade.a;
+          break;
+        case 1:
+          oldTrade.real.b = trade.b;
+          break;
+        case 2:
+          oldTrade.real.c = trade.c;
+          break;
+      }
+      return await this.trade.put(oldTrade);
+    }
   }
 
   async closeTradingSession(trade: types.ITradeTriangle) {
-
-    const queue = await this.getQueue(trade);
+    const queue = await this.getQueue(trade.id, trade.exchange);
     if (!queue || !queue._id || !queue._rev) {
       return;
     }
     await this.queue.remove(queue._id, queue._rev);
-    const tradeInfo = Object.assign({}, await this.trade.get(queue._id), trade);
-    return await this.trade.put(tradeInfo);
+    const oldTrade: types.ITrade = <any>await this.trade.get(queue._id);
+    if (oldTrade.real) {
+      oldTrade.real.c = trade.c;
+      return await this.trade.put(oldTrade);
+    }
+  }
+
+  async clearQueue(tradeId: string, exchange: string) {
+    const queue = await this.getQueue(tradeId, exchange);
+    if (!queue || !queue._id || !queue._rev) {
+      return;
+    }
+    await this.queue.remove(queue._id, queue._rev);
   }
 }

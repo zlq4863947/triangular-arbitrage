@@ -1,21 +1,15 @@
 import { BigNumber } from 'bignumber.js';
 import * as ccxt from 'ccxt';
-import { logger, Helper } from './common';
-import { ApiHandler } from './api-handler';
-import { Storage } from './storage';
-import * as types from './type';
+import { logger, Helper } from '../common';
+import { ApiHandler } from '../api-handler';
+import * as types from '../type';
 
 const clc = require('cli-color');
 const config = require('config');
 
-export class Trading extends ApiHandler {
-  balances!: types.IBalances;
-  storage: Storage;
-  private worker = 0;
-
+export class Mocker extends ApiHandler {
   constructor() {
     super();
-    this.storage = new Storage();
   }
 
   /**
@@ -57,7 +51,7 @@ export class Trading extends ApiHandler {
     let tradeAmount = Helper.getConvertedAmount({
       side: edge.side,
       exchangeRate: edge.price,
-      amount: fmAmount.toNumber()
+      amount: fmAmount.toNumber(),
     });
     if (edge.side.toLowerCase() === 'buy') {
       const tradecost = new BigNumber(feeRate).plus(1);
@@ -85,7 +79,7 @@ export class Trading extends ApiHandler {
       tradeAmount = Helper.formatTradeAmount(tradeAmount, edge.price, edge.side, priceScale);
     }
     tradeEdge.fee = tradeAmount.times(feeRate).toFixed(8) + ' ' + edge.coinTo;
-    tradeEdge.amount = +tradeAmount.toFixed(8);
+    tradeEdge.amount = +tradeAmount.toFixed(priceScale.amount, 1);
     tradeEdge.bigAmount = tradeAmount;
     tradeEdge.price = edge.price;
     tradeEdge.timecost = Helper.endTimer(timer);
@@ -106,14 +100,13 @@ export class Trading extends ApiHandler {
       logger.debug('未查找到持有资产！！');
       return;
     }
-    this.balances = balances;
 
     const tradeTriangle = <types.ITradeTriangle>{
       coin: triangle.a.coinFrom,
-      exchange: config.exchange.active
+      exchange: config.exchange.active,
     };
 
-    const asset = this.balances[tradeTriangle.coin];
+    const asset = balances[tradeTriangle.coin];
     if (!asset) {
       logger.debug(`未查找到持有${tradeTriangle.coin}！！`);
       return;
@@ -125,7 +118,6 @@ export class Trading extends ApiHandler {
     }
     // 如果a点为卖出时，检查是否满足最小下单总金额
     if (triangle.a.side === 'sell') {
-
       // 获取交易精度
       const priceScale = Helper.getPriceScale(exchange.pairs, triangle.a.pair);
       if (priceScale && priceScale.cost) {
@@ -133,7 +125,7 @@ export class Trading extends ApiHandler {
         const minCostAmount = Helper.getConvertedAmount({
           side: triangle.a.side,
           exchangeRate: triangle.a.price,
-          amount: priceScale.cost
+          amount: priceScale.cost,
         });
         if (free.isLessThanOrEqualTo(minCostAmount)) {
           logger.debug(`持有${free + ' ' + triangle.a.coinFrom},小于最低交易数量（${minCostAmount}）！！`);
@@ -170,7 +162,7 @@ export class Trading extends ApiHandler {
     const before = Helper.getConvertedAmount({
       side: tradeTriangle.a.side === 'buy' ? 'sell' : 'buy',
       exchangeRate: tradeTriangle.a.price,
-      amount: tradeTriangle.a.amount
+      amount: tradeTriangle.a.amount,
     });
     tradeTriangle.before = +before.toFixed(8);
 
@@ -182,7 +174,7 @@ export class Trading extends ApiHandler {
     tradeTriangle.profit = profit.toFixed(8);
     if (profit.isLessThanOrEqualTo(0)) {
       logger.info(`订单可行性检测结果，利润(${clc.redBright(tradeTriangle.profit)})为负数，终止下单！`);
-      return;
+      return tradeTriangle;
     }
     tradeTriangle.id = triangle.id;
     // 利率
@@ -197,174 +189,5 @@ export class Trading extends ApiHandler {
     logger.info(`套利前资产：${tradeTriangle.before}, 套利后资产：${tradeTriangle.after}`);
     logger.info(`利润：${clc.greenBright(tradeTriangle.profit)}, 利率：${clc.greenBright(tradeTriangle.rate)}`);
     return tradeTriangle;
-  }
-
-  // 下单
-  async placeOrder(exchange: types.IExchange, triangle: types.ITriangle) {
-    try {
-      const testTrade = await this.testOrder(exchange, triangle);
-      // 未通过检查时返回
-      if (!testTrade) {
-        logger.info(`套利组合未通过可行性检测！！`);
-        return;
-      }
-
-      if (config.trading.mock) {
-        logger.info('配置为模拟交易，终止真实交易！');
-        return;
-      }
-
-      logger.info('----- 套利开始 -----');
-      logger.info(`路径：${clc.cyanBright(triangle.id)} 利率: ${triangle.rate}`);
-
-      // 放入交易队列
-      await this.storage.openTradingSession(testTrade);
-
-      // 获取交易额度
-      logger.info(`第一步：${clc.blueBright(triangle.a.pair)}`);
-      const tradeA = testTrade.a;
-      logger.info(`限价：${tradeA.price}, 数量：${tradeA.amount}, 方向：${tradeA.side}`);
-      const order = <types.IOrder>{
-        symbol: tradeA.pair,
-        side: tradeA.side.toLowerCase(),
-        type: 'limit',
-        price: tradeA.price,
-        amount: tradeA.amount
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
-      }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
-
-      const nextB = async () => {
-        logger.info('执行nextB...');
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
-        if (!orderRes) {
-          return false;
-        }
-        logger.info(`查询订单状态： ${orderRes.status}`);
-        // 交易成功时
-        if (orderRes.status === 'closed') {
-          if (this.worker) {
-            clearInterval(this.worker);
-          }
-          // 修正数量
-          testTrade.a.amount = orderRes.amount;
-          await this.orderB(exchange, testTrade);
-          return true;
-        }
-        return false;
-      };
-
-      // 订单未成交时
-      if (!await nextB()) {
-        logger.info('订单未成交,每秒循环执行。');
-        this.worker = setInterval(nextB.bind(this), 1000);
-      }
-    } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-    }
-  }
-
-  async orderB(exchange: types.IExchange, trade: types.ITradeTriangle) {
-    logger.info(`第二步：${clc.blueBright(trade.b.pair)}`);
-    try {
-      const tradeB = trade.b;
-
-      // 更新队列和交易信息
-      await this.storage.updateTradingSession(trade, 1);
-
-      // this.getFreeAmount(exchange)
-      logger.info(`限价：${tradeB.price}, 数量：${tradeB.amount}, 方向：${tradeB.side}`);
-      const order = <types.IOrder>{
-        symbol: tradeB.pair,
-        side: tradeB.side.toLowerCase(),
-        type: 'limit',
-        price: tradeB.price,
-        amount: tradeB.amount
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
-      }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
-
-      const nextC = async () => {
-        logger.info('执行nextC...');
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
-        if (!orderRes) {
-          return false;
-        }
-        logger.info(`查询订单状态： ${orderRes.status}`);
-        // 交易成功时
-        if (orderRes.status === 'closed') {
-          if (this.worker) {
-            clearInterval(this.worker);
-          }
-          trade.b.amount = orderRes.amount;
-          await this.orderC(exchange, trade);
-          return true;
-        }
-        return false;
-      };
-
-      // 订单未成交时
-      if (!await nextC()) {
-        logger.info('订单未成交,每秒循环执行。');
-        this.worker = setInterval(nextC.bind(this), 1000);
-      }
-    } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-    }
-  }
-
-  async orderC(exchange: types.IExchange, trade: types.ITradeTriangle) {
-    logger.info(`第三步：${clc.blueBright(trade.c.pair)}`);
-    try {
-      const tradeC = trade.c;
-      // 更新队列和交易信息
-      await this.storage.updateTradingSession(trade, 2);
-      logger.info(`限价：${tradeC.price}, 数量：${tradeC.amount}, 方向：${tradeC.side}`);
-      const order = <types.IOrder>{
-        symbol: tradeC.pair,
-        side: tradeC.side.toLowerCase(),
-        type: 'limit',
-        price: tradeC.price,
-        amount: tradeC.amount
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
-      }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
-
-      const completedC = async () => {
-        logger.info('completedC...');
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
-        if (!orderRes) {
-          return false;
-        }
-        logger.info(`查询订单状态： ${orderRes.status}`);
-        // 交易成功时
-        if (orderRes.status === 'closed') {
-          if (this.worker) {
-            clearInterval(this.worker);
-          }
-          logger.info(`三角套利完成,最终获得：${orderRes.amount}...`);
-          // 在交易队列中清除这条数据
-          await this.storage.closeTradingSession(trade);
-        }
-        return false;
-      };
-
-      // 订单未成交时
-      if (!await completedC()) {
-        logger.info('订单未成交,每秒循环执行。');
-        this.worker = setInterval(completedC.bind(this), 1000);
-      }
-    } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-    }
   }
 }

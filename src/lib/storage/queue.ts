@@ -1,6 +1,7 @@
 import * as types from '../type';
 import { logger } from '../common';
 import { StorageBase } from './base';
+const moment = require('moment');
 const config = require('config');
 
 export class Queue extends StorageBase {
@@ -23,26 +24,51 @@ export class Queue extends StorageBase {
   }
 
   async getQueue(trade: types.ITradeTriangle) {
-    const queueRes = await this.findQueue({
-      selector: {
-        triangleId: trade.id,
-        exchange: trade.exchange
-      }
-    });
+    const queueRes = await this.findQueue(trade.id, trade.exchange);
     // 队列中triangleId和exchange组合key是唯一的
-    if (!queueRes || queueRes.docs.length !== 1) {
+    if (!queueRes || !queueRes.doc) {
       return;
     }
-    return <types.IQueue>queueRes.docs[0];
+    return <types.IQueue>queueRes.doc;
   }
 
-  async findQueue(selecter: { [attr: string]: any }) {
-    await this.createIndex({
+  async findQueue(triangleId: string, exchange: string) {
+    /*await this.createIndex({
       index: {
         fields: ['triangleId']
       }
-    })
-    return await this.find({ selector: selecter });
+    })*/
+    const docs = await this.allDocs({
+      include_docs: true,
+      attachments: true,
+    });
+    if (docs.rows.length > 0) {
+      return docs.rows.find(o => {
+        if (o.doc) {
+          const queue = <types.IQueue>o.doc;
+          return queue.triangleId === triangleId && queue.exchange === exchange;
+        }
+        return false;
+      })
+    }
+  }
+
+  async clearQueue() {
+    const docs = await this.allDocs({
+      include_docs: true,
+      attachments: true,
+    });
+    for (const row of docs.rows) {
+      if (!row.doc) {
+        return;
+      }
+      const queue = <types.IQueue>row.doc;
+      const timelimit = Date.now() - moment.duration(15, 'm').asMilliseconds();
+      // 队列中数据超过15分钟时删除
+      if (queue._id && queue.ts && timelimit > queue.ts) {
+        await this.removeQueue(queue._id);
+      }
+    }
   }
 
   async removeQueue(id: string) {

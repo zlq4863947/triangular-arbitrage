@@ -8,11 +8,11 @@ const testCreateOrder = async () => {
   const exchange = <types.IExchange>Helper.getExchange(types.ExchangeId.Binance);
   const api = new ApiHandler();
   const order: types.IOrder = {
-    symbol: 'ETH/BTC',            // symbol in CCXT format
-    amount: 0.014,            // amount of base currency
-    price: 0.077845,             // float price in quote currency
+    symbol: 'ETH/BTC', // symbol in CCXT format
+    amount: 0.014, // amount of base currency
+    price: 0.077845, // float price in quote currency
     type: 'limit', // order type, 'market', 'limit' or undefined/None/null
-    side: 'buy'
+    side: 'buy',
   };
   const res = await api.createOrder(exchange, order);
   console.log(res);

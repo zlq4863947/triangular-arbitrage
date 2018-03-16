@@ -5,9 +5,7 @@ import { logger, Helper } from './common';
 
 export { ccxt };
 export class ApiHandler {
-
   async getBalance(exchange: types.IExchange): Promise<types.IBalances | undefined> {
-
     const api = exchange.endpoint.private;
     if (!api) {
       return;

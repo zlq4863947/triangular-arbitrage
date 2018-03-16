@@ -2,7 +2,6 @@ import * as types from './type';
 import { BigNumber } from 'bignumber.js';
 
 export class Rate {
-
   /**
    * 汇率对象转换（返回可购买数量）
    *
