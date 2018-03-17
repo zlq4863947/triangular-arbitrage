@@ -72,7 +72,8 @@ const testQueue = async () => {
     step: 0,
   };
   // const res2 = await storage.queue.addQueue(queue);
-  const res = await storage.queue.findQueue(queue.triangleId, queue.exchange);
+  // const res = await storage.queue.findQueue(queue.triangleId, queue.exchange);
+  const res = await storage.queue.get('5edc408001f0ccb7080b7fe63d00c1c0');
   /*
     const res = await storage.queue.allDocs({
       include_docs: true,

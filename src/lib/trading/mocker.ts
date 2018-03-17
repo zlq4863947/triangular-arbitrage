@@ -14,6 +14,7 @@ export class Mocker extends ApiHandler {
 
   /**
    * 模拟每个边的交易信息
+   *
    * @param pairs 全市场交易对
    * @param edge 组合边
    * @param amount 待交易数量
@@ -45,9 +46,13 @@ export class Mocker extends ApiHandler {
       logger.debug(`未取得交易对的手续费！！`);
       return;
     }
-    tradeEdge.fee = amount.times(feeRate).toFixed(8) + ' ' + edge.coinTo;
     tradeEdge.amount = +amount.toFixed(priceScale.amount, 1);
     tradeEdge.price = edge.price;
+    tradeEdge.fee = Helper.getConvertedAmount({
+      side: edge.side,
+      exchangeRate: edge.price,
+      amount: tradeEdge.amount
+    }).times(feeRate).toFixed(8) + ' ' + edge.coinTo;
     tradeEdge.timecost = Helper.endTimer(timer);
     return tradeEdge;
   }
@@ -132,18 +137,26 @@ export class Mocker extends ApiHandler {
     tradeTriangle.b = tradeEdgeB;
 
     // ---------------------- C点开始------------------------
-    const cAmount = Helper.getConvertedAmount({
-      side: triangle.c.side,
-      exchangeRate: triangle.c.price,
-      amount: tradeEdgeB.amount
-    });
+    let cAmount = bAmount;
+    if (triangle.c.side === 'buy') {
+      cAmount = Helper.getConvertedAmount({
+        side: triangle.c.side,
+        exchangeRate: triangle.c.price,
+        amount: tradeEdgeB.amount
+      });
+    }
     const tradeEdgeC = this.getMockTradeEdge(exchange.pairs, triangle.c, cAmount);
     if (!tradeEdgeC) {
       return;
     }
     tradeTriangle.c = tradeEdgeC;
 
-    const after = tradeTriangle.c.amount;
+    // const after = tradeTriangle.c.amount;
+    const after = Helper.getConvertedAmount({
+      side: tradeTriangle.c.side,
+      exchangeRate: tradeTriangle.c.price,
+      amount: tradeTriangle.c.amount
+    })
     tradeTriangle.after = +after.toFixed(8);
 
     const profit = new BigNumber(after).minus(tradeTriangle.before);

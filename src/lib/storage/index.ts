@@ -42,7 +42,8 @@ export class Storage {
       return;
     }
     trade._id = queueInfo.id;
-    return await this.trade.put(trade);
+    await this.trade.put(trade);
+    return trade._id;
   }
 
   async updateTradingSession(trade: types.ITradeTriangle, step: types.tradeStep) {

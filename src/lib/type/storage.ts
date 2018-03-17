@@ -31,6 +31,8 @@ export interface ITradeEdge {
 export interface ITradeTriangle {
   // 三角组合唯一id（例:btc-bnb-bcd）
   id: string;
+  // 队列id
+  queueId: string;
   a: ITradeEdge;
   b: ITradeEdge;
   c: ITradeEdge;
