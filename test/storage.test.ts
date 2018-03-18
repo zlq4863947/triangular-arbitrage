@@ -73,7 +73,10 @@ const testQueue = async () => {
   };
   // const res2 = await storage.queue.addQueue(queue);
   // const res = await storage.queue.findQueue(queue.triangleId, queue.exchange);
-  const res = await storage.queue.get('5edc408001f0ccb7080b7fe63d00c1c0');
+  const res: types.IQueue = <any>await storage.queue.get('5edc408001f0ccb7080b7fe63d00c1c0');
+  res.error = 'xxx';
+  await storage.queue.updateQueue(res);
+  // const res = await storage.trade.get('5edc408001f0ccb7080b7fe63d00c1c0');
   /*
     const res = await storage.queue.allDocs({
       include_docs: true,

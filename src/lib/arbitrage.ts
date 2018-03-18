@@ -1,9 +1,8 @@
+import { BigNumber } from 'bignumber.js';
 import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
-import { Queue } from './storage/queue';
 import { Aggregator } from './aggregator';
-import { BigNumber } from 'bignumber.js';
 import * as types from './type';
 
 const clc = require('cli-color');
@@ -18,15 +17,12 @@ export class TriangularArbitrage extends Event {
   engine: Engine;
   // 集计数据提供
   aggregator: Aggregator;
-  // 交易会话队列
-  tradingQueue: Queue;
 
   constructor() {
     super();
     this.activeExchangeId = <types.ExchangeId>config.exchange.active;
     this.engine = new Engine();
     this.aggregator = new Aggregator();
-    this.tradingQueue = new Queue(config.storage.url);
   }
 
   async start(activeExchangeId?: types.ExchangeId) {
@@ -114,12 +110,12 @@ export class TriangularArbitrage extends Event {
         return;
       }
       // 清理超时数据
-      await this.tradingQueue.clearQueue();
-      const limitCheck = await Helper.checkQueueLimit(this.tradingQueue)
-      if (!limitCheck) {
-        logger.debug('交易会话数已到限制数!!');
-        return;
-      }
+      // await this.tradingQueue.clearQueue();
+      /* const limitCheck = await Helper.checkQueueLimit(this.tradingQueue)
+       if (!limitCheck) {
+         logger.debug('交易会话数已到限制数!!');
+         return;
+       }*/
       const allTickers = await this.aggregator.getAllTickers(exchange, tickers);
       if (!allTickers) {
         return;

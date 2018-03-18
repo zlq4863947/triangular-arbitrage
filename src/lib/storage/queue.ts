@@ -23,6 +23,10 @@ export class Queue extends StorageBase {
     }
   }
 
+  async updateQueue(queue: types.IQueue) {
+    return await this.put(queue);
+  }
+
   async getQueue(trade: types.ITradeTriangle) {
     const queueRes = await this.findQueue(trade.id, trade.exchange);
     // 队列中triangleId和exchange组合key是唯一的
@@ -32,7 +36,7 @@ export class Queue extends StorageBase {
     return <types.IQueue>queueRes.doc;
   }
 
-  async findQueue(triangleId: string, exchange: string) {
+  async findQueue(triangleId: string, exchangeId: string) {
     /*await this.createIndex({
       index: {
         fields: ['triangleId']
@@ -46,7 +50,7 @@ export class Queue extends StorageBase {
       return docs.rows.find(o => {
         if (o.doc) {
           const queue = <types.IQueue>o.doc;
-          return queue.triangleId === triangleId && queue.exchange === exchange;
+          return queue.triangleId === triangleId && queue.exchange === exchangeId;
         }
         return false;
       })

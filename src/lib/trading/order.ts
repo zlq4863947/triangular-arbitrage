@@ -2,19 +2,16 @@ import * as types from '../type';
 import { ApiHandler } from '../api-handler';
 import { logger, Helper } from '../common';
 import { Storage } from '../storage';
-import { Daemon } from './daemon';
 
 const clc = require('cli-color');
 export class Order extends ApiHandler {
 
   private worker = 0;
   storage: Storage;
-  daemon: Daemon;
 
   constructor(storage: Storage) {
     super();
     this.storage = storage;
-    this.daemon = new Daemon(this.storage);
   }
 
   async orderA(exchange: types.IExchange, testTrade: types.ITradeTriangle) {
@@ -73,8 +70,9 @@ export class Order extends ApiHandler {
         this.worker = setInterval(nextB.bind(this), 1000);
       }
     } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-      await this.daemon.reboot(exchange, testTrade)
+      const errMsg = err.message ? err.message : err.msg;
+      logger.error(`订单A出错： ${errMsg}`);
+      await this.errorHandle(testTrade.queueId, errMsg);
     }
   }
 
@@ -133,8 +131,9 @@ export class Order extends ApiHandler {
         this.worker = setInterval(nextC.bind(this), 1000);
       }
     } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-      await this.daemon.reboot(exchange, trade);
+      const errMsg = err.message ? err.message : err.msg;
+      logger.error(`订单B出错： ${errMsg}`);
+      await this.errorHandle(trade.queueId, errMsg);
     }
   }
 
@@ -190,8 +189,15 @@ export class Order extends ApiHandler {
         this.worker = setInterval(completedC.bind(this), 1000);
       }
     } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
-      await this.daemon.reboot(exchange, trade);
+      const errMsg = err.message ? err.message : err.msg;
+      logger.error(`订单C出错： ${errMsg}`);
+      await this.errorHandle(trade.queueId, errMsg);
     }
+  }
+
+  private async errorHandle(queueId: string, error: string) {
+    const res: types.IQueue = <any>await this.storage.queue.get(queueId);
+    res.error = error;
+    await this.storage.queue.updateQueue(res);
   }
 }

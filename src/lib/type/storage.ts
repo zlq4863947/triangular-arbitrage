@@ -62,5 +62,6 @@ export interface IQueue {
   triangleId: string;
   exchange: string;
   step: tradeStep;
+  error?: string;
   ts?: number;
 }

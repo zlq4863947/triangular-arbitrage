@@ -120,11 +120,17 @@ export class Mocker extends ApiHandler {
     tradeTriangle.before = tradeEdgeA.amount;
 
     // ---------------------- B点开始------------------------
-    const aAmount = Helper.getConvertedAmount({
-      side: tradeEdgeA.side,
-      exchangeRate: tradeEdgeA.price,
-      amount: tradeEdgeA.amount
-    });
+    let aAmount = tradeEdgeA.amount;
+    if (tradeEdgeA.side === 'sell') {
+      tradeTriangle.before = tradeEdgeA.amount;
+      aAmount = +Helper.getConvertedAmount({
+        side: tradeEdgeA.side,
+        exchangeRate: tradeEdgeA.price,
+        amount: tradeEdgeA.amount
+      }).toFixed(8);
+    } else {
+      tradeTriangle.before = +Helper.convertAmount(tradeEdgeA.price, tradeEdgeA.amount, tradeEdgeA.side).toFixed(8);
+    }
     const bAmount = Helper.getConvertedAmount({
       side: triangle.b.side,
       exchangeRate: triangle.b.price,

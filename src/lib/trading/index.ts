@@ -1,10 +1,11 @@
 import { BigNumber } from 'bignumber.js';
 import * as ccxt from 'ccxt';
+import * as types from '../type';
 import { logger, Helper } from '../common';
 import { Storage } from '../storage';
 import { Mocker } from './mocker';
 import { Order } from './order';
-import * as types from '../type';
+import { Daemon } from './daemon';
 
 const clc = require('cli-color');
 const config = require('config');
@@ -13,11 +14,13 @@ export class Trading {
   mocker: Mocker;
   order: Order;
   storage: Storage;
+  daemon: Daemon;
 
   constructor() {
     this.mocker = new Mocker();
     this.storage = new Storage();
     this.order = new Order(this.storage);
+    this.daemon = new Daemon(this.storage);
   }
   async testOrder(exchange: types.IExchange, triangle: types.ITriangle) {
     return await this.mocker.testOrder(exchange, triangle);
@@ -39,6 +42,14 @@ export class Trading {
 
       logger.info('----- 套利开始 -----');
       logger.info(`路径：${clc.cyanBright(triangle.id)} 利率: ${triangle.rate}`);
+      // 清理超时数据
+      // await this.storage.queue.clearQueue();
+      const daemonCheck = await this.daemon.check(exchange);
+      if (!daemonCheck) {
+        logger.debug('处理交易会话错误!!');
+        return;
+      }
+
       const limitCheck = await Helper.checkQueueLimit(this.storage.queue)
       if (!limitCheck) {
         logger.debug('交易会话数已到限制数!!');
@@ -57,7 +68,7 @@ export class Trading {
       // 执行a点订单
       await this.order.orderA(exchange, testTrade);
     } catch (err) {
-      logger.error(`订单出错： ${err.message ? err.message : err.msg}`);
+      logger.error(`处理订单出错： ${err.message ? err.message : err.msg}`);
       // 退出交易队列
       // await this.storage.clearQueue(triangle.id, exchange.id);
     }
