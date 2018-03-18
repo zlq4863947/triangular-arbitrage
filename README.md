@@ -1,9 +1,6 @@
 # triangular-arbitrage
 数字货币-三角套利机器人
 
-## 计算公式 
-- 套利后获得值 = 1/A价格/B价格/C价格x换回A的价格
-- 利润率= （套利后持有值-之前持有值）/之前持有值
 
 ## 配置
 1、config/default.org.toml 改为 config/default.toml
@@ -29,7 +26,7 @@ https://couchdb.apache.org/#download
 
 - default.toml配置
 
-找到storage项目中的`url = ''`改为`url = 'http://localhost:5984'`
+找到storage项目中的`url = ""`改为`url = "http://127.0.0.1:5984"`
 
 - CMD切换到项目路径，执行如下命令
 ```js
@@ -38,7 +35,10 @@ npm run ws
 
 ## 页面显示
 打开`127.0.0.1：3000`后，显示如下：
-<p align="center"><img src="assets/index.png"></p>
+<p align="center"><img src="assets/webui.png"></p>
+
+## 系统构成图
+<p align="center"><img src="assets/diagram.png"></p>
 
 ## 疑难解答
 

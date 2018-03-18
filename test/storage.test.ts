@@ -56,15 +56,41 @@ const testRank = async () => {
     ts: 1520516680000,
   };
   ranks.push(rank);
-  await storage.rank.putRanks(ranks);
+  const putRes = await storage.rank.post(rank);
+  assert(putRes.id);
+  // const putRes = await storage.rank.putRanks(ranks);
+  console.log('putRes: ', JSON.stringify(putRes, null, 2));
   const res = await storage.rank.getAllDocs();
   console.log(res);
+};
+
+const testQueue = async () => {
+  const storage = new Storage();
+  const queue: types.IQueue = {
+    triangleId: 'BNB-BTC-IOsTA',
+    exchange: 'binance',
+    step: 0,
+  };
+  // const res2 = await storage.queue.addQueue(queue);
+  // const res = await storage.queue.findQueue(queue.triangleId, queue.exchange);
+  const res: types.IQueue = <any>await storage.queue.get('5edc408001f0ccb7080b7fe63d00c1c0');
+  res.error = 'xxx';
+  await storage.queue.updateQueue(res);
+  // const res = await storage.trade.get('5edc408001f0ccb7080b7fe63d00c1c0');
+  /*
+    const res = await storage.queue.allDocs({
+      include_docs: true,
+      attachments: true,
+    });*/
+  assert(res);
+  // const putRes = await storage.rank.putRanks(ranks);
+  console.log('putRes: ', JSON.stringify(res, null, 2));
 };
 
 const testTrade = async () => {
   const storage = new Storage();
   const trades: types.ITradeTriangle[] = [];
-  const trade: types.ITradeTriangle = {
+  /*const trade: types.ITradeTriangle = {
     "_id": "1520516680001",
     "coin": "BTC2",
     "a": {
@@ -103,11 +129,12 @@ const testTrade = async () => {
   trades.push(trade);
   await storage.trade.putTrades(trades);
   const res = await storage.trade.getAllDocs();
-  console.log(JSON.stringify(res, null, 2));
+  console.log(JSON.stringify(res, null, 2));*/
 };
 
 describe('存储测试', () => {
   // it('测试pouchdb', testPutDb);
   // it('测试Rank', testRank);
-  it('测试Trade', testTrade);
+  it('测试queue', testQueue);
+  // it('测试Trade', testTrade);
 });

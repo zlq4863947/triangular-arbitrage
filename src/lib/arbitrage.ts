@@ -1,8 +1,8 @@
+import { BigNumber } from 'bignumber.js';
 import { logger, Helper } from './common';
 import { Event } from './event';
 import { Engine } from './engine';
 import { Aggregator } from './aggregator';
-import { BigNumber } from 'bignumber.js';
 import * as types from './type';
 
 const clc = require('cli-color');
@@ -102,13 +102,20 @@ export class TriangularArbitrage extends Event {
   // 套利测算
   async estimate(tickers?: types.Binance24HrTicker[]) {
     const timer = Helper.getTimer();
-    logger.info(clc.magentaBright('----- 套利测算 -----'));
     logger.debug('监视行情[开始]');
     try {
+      logger.info(clc.magentaBright('----- 套利测算 -----'));
       const exchange = this.exchanges.get(this.activeExchangeId);
       if (!exchange) {
         return;
       }
+      // 清理超时数据
+      // await this.tradingQueue.clearQueue();
+      /* const limitCheck = await Helper.checkQueueLimit(this.tradingQueue)
+       if (!limitCheck) {
+         logger.debug('交易会话数已到限制数!!');
+         return;
+       }*/
       const allTickers = await this.aggregator.getAllTickers(exchange, tickers);
       if (!allTickers) {
         return;
@@ -139,7 +146,7 @@ export class TriangularArbitrage extends Event {
       }
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
     } catch (err) {
-      logger.error(`监视行情[异常](${Helper.endTimer(timer)}): ${err}`);
+      logger.error(`监视行情[异常](${Helper.endTimer(timer)}): ${JSON.stringify(err)}`);
     }
   }
 }

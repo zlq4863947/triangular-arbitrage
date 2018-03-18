@@ -4,7 +4,7 @@ import { StorageBase } from './base';
 const config = require('config');
 
 export class Rank extends StorageBase {
-  static id = 'db/rank';
+  static id = 'rank';
 
   constructor(url: string) {
     super(url + Rank.id);
