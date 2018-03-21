@@ -12,7 +12,7 @@ setInterval(async () => {
       include_docs: true,
       attachments: true,
     });
-    for (let [i, row] of rows.entries()) {
+    for (const [i, row] of rows.entries()) {
       if (docs.rows[i]) {
         rows[i] = Object.assign({}, docs.rows[i].doc, row);
       }

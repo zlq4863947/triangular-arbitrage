@@ -28,10 +28,19 @@ export class Trading {
   // 下单
   async placeOrder(exchange: types.IExchange, triangle: types.ITriangle) {
     try {
+      // 清理超时数据
+      await this.storage.queue.clearQueue();
+      // 继续处理失败的队列
+      await this.daemon.continueTrade(exchange);
+
+      const limitCheck = await Helper.checkQueueLimit(this.storage.queue)
+      if (!limitCheck) {
+        return;
+      }
       const testTrade = await this.testOrder(exchange, triangle);
       // 未通过检查时返回
-      if (!testTrade) {
-        logger.info(`套利组合未通过可行性检测！！`);
+      if (!testTrade || !testTrade.id) {
+        // logger.info(`套利组合未通过可行性检测！！`);
         return;
       }
 
@@ -42,19 +51,6 @@ export class Trading {
 
       logger.info('----- 套利开始 -----');
       logger.info(`路径：${clc.cyanBright(triangle.id)} 利率: ${triangle.rate}`);
-      // 清理超时数据
-      // await this.storage.queue.clearQueue();
-      const daemonCheck = await this.daemon.check(exchange);
-      if (!daemonCheck) {
-        logger.debug('处理交易会话错误!!');
-        return;
-      }
-
-      const limitCheck = await Helper.checkQueueLimit(this.storage.queue)
-      if (!limitCheck) {
-        logger.debug('交易会话数已到限制数!!');
-        return;
-      }
 
       // 放入交易队列
       const queueId = await this.storage.openTradingSession({

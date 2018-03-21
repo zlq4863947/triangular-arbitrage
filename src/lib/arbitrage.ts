@@ -104,18 +104,11 @@ export class TriangularArbitrage extends Event {
     const timer = Helper.getTimer();
     logger.debug('监视行情[开始]');
     try {
-      logger.info(clc.magentaBright('----- 套利测算 -----'));
+      // logger.info(clc.magentaBright('----- 套利测算 -----'));
       const exchange = this.exchanges.get(this.activeExchangeId);
       if (!exchange) {
         return;
       }
-      // 清理超时数据
-      // await this.tradingQueue.clearQueue();
-      /* const limitCheck = await Helper.checkQueueLimit(this.tradingQueue)
-       if (!limitCheck) {
-         logger.debug('交易会话数已到限制数!!');
-         return;
-       }*/
       const allTickers = await this.aggregator.getAllTickers(exchange, tickers);
       if (!allTickers) {
         return;
@@ -133,17 +126,17 @@ export class TriangularArbitrage extends Event {
       }
       // 更新套利数据
       if (ranks[0]) {
-        logger.info(`选出套利组合第一名：${candidates[0].id}, 预测利率(扣除手续费): ${ranks[0].profitRate[0]}`);
+        // logger.info(`选出套利组合第一名：${candidates[0].id}, 预测利率(扣除手续费): ${ranks[0].profitRate[0]}`);
         // 执行三角套利
         this.emit('placeOrder', exchange, candidates[0]);
       }
 
-      const output = candidates.length > 5 ? candidates.slice(0, 5) : candidates.slice(0, candidates.length);
+      /*const output = candidates.length > 5 ? candidates.slice(0, 5) : candidates.slice(0, candidates.length);
       for (const candidate of output) {
         const clcRate = candidate.rate < 0 ? clc.redBright(candidate.rate) : clc.greenBright(candidate.rate);
         const path = candidate.id.length < 15 ? candidate.id + ' '.repeat(15 - candidate.id.length) : candidate.id;
         logger.info(`路径：${clc.cyanBright(path)} 利率: ${clcRate}`);
-      }
+      }*/
       logger.debug(`监视行情[终了] ${Helper.endTimer(timer)}`);
     } catch (err) {
       logger.error(`监视行情[异常](${Helper.endTimer(timer)}): ${JSON.stringify(err)}`);

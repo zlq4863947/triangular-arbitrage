@@ -33,6 +33,9 @@ export class Storage {
    * 打开交易会话
    */
   async openTradingSession(trade: types.ITrade) {
+    if (!trade.mock.id || !trade.mock.exchange) {
+      return;
+    }
     const queueInfo = await this.queue.addQueue({
       triangleId: trade.mock.id,
       exchange: trade.mock.exchange,
@@ -42,6 +45,10 @@ export class Storage {
       return;
     }
     trade._id = queueInfo.id;
+    trade.mock.queueId = queueInfo.id;
+    if (trade.real) {
+      trade.real.queueId = queueInfo.id;
+    }
     await this.trade.put(trade);
     return trade._id;
   }

@@ -70,6 +70,7 @@ export class Queue extends StorageBase {
       const timelimit = Date.now() - moment.duration(15, 'm').asMilliseconds();
       // 队列中数据超过15分钟时删除
       if (queue._id && queue.ts && timelimit > queue.ts) {
+        logger.error(`删除超过15分钟的队列: ${queue._id}`);
         await this.removeQueue(queue._id);
       }
     }
