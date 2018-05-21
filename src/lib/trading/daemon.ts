@@ -1,6 +1,8 @@
 import * as types from '../type';
 import { Storage } from '../storage';
 import { Order } from './order';
+import { logger } from '../common';
+const clc = require('cli-color');
 
 export class Daemon {
 
@@ -20,15 +22,26 @@ export class Daemon {
 
   // 重启套利流程
   private async reboot(exchange: types.IExchange, trade: types.ITradeTriangle, queue: types.IQueue) {
-    if (!trade.a.orderId) {
-      // 退出交易队列
-      await this.storage.clearQueue(trade.id, exchange.id);
-    } else if (!trade.b.orderId && queue.step === 0) {
+    logger.info('----- 继续前次套利 -----');
+    logger.info(`路径：${clc.cyanBright(trade.id)} 利率: ${trade.rate}`);
+    // 第一步
+    if (queue.step === 0) {
+      if (!trade.a.orderId) {
+        logger.info('A点订单为空，退出交易队列！');
+        // 退出交易队列
+        await this.storage.clearQueue(trade.id, exchange.id);
+      } else {
+        if (queue._id) {
+          await this.clearError(queue._id);
+          this.order.orderA(exchange, trade)
+        }
+      }
+    } else if (queue.step === 1) {
       if (queue._id) {
         await this.clearError(queue._id);
       }
       await this.order.orderB(exchange, trade);
-    } else if (!trade.c.orderId && queue.step === 1) {
+    } else if (queue.step === 2) {
       if (queue._id) {
         await this.clearError(queue._id);
       }
@@ -36,14 +49,12 @@ export class Daemon {
     }
   }
 
-  async check(exchange: types.IExchange) {
+  // 继续处理失败的队列
+  async continueTrade(exchange: types.IExchange) {
     const res = await this.storage.queue.allDocs({
       include_docs: true,
       attachments: true,
     });
-    if (res.total_rows <= 0) {
-      return true;
-    }
 
     for (const row of res.rows) {
       if (!row.doc || !row.doc._id) {
@@ -59,6 +70,5 @@ export class Daemon {
       }
       await this.reboot(exchange, trade.real, queue);
     }
-    return false;
   }
 }

@@ -59,7 +59,7 @@ export class Mocker extends ApiHandler {
 
   // 订单执行前，可行性检查
   async testOrder(exchange: types.IExchange, triangle: types.ITriangle) {
-    logger.info(`三角套利组合：${triangle.id}, 订单可行性检测...`);
+    // logger.info(`三角套利组合：${triangle.id}, 订单可行性检测...`);
     if (!exchange.endpoint.private || !exchange.pairs) {
       logger.error('交易所相关参数出错！！');
       return;
@@ -105,7 +105,7 @@ export class Mocker extends ApiHandler {
     }
 
     if (triangle.a.side === 'sell' && free.isLessThanOrEqualTo(minAmount)) {
-      logger.debug(`持有${free + ' ' + triangle.a.coinFrom},小于最低交易数量（${minAmount}）！！`);
+     // logger.debug(`持有${free + ' ' + triangle.a.coinFrom},小于最低交易数量（${minAmount}）！！`);
       return;
     }
     // 查找最佳交易量
@@ -169,7 +169,7 @@ export class Mocker extends ApiHandler {
     // 利润
     tradeTriangle.profit = profit.toFixed(8);
     if (profit.isLessThanOrEqualTo(0)) {
-      logger.info(`订单可行性检测结果，利润(${clc.redBright(tradeTriangle.profit)})为负数，终止下单！`);
+      // logger.info(`订单可行性检测结果，利润(${clc.redBright(tradeTriangle.profit)})为负数，终止下单！`);
       return tradeTriangle;
     }
     tradeTriangle.id = triangle.id;

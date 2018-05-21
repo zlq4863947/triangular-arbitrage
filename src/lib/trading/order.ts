@@ -17,31 +17,34 @@ export class Order extends ApiHandler {
   async orderA(exchange: types.IExchange, testTrade: types.ITradeTriangle) {
     try {
       const timer = Helper.getTimer();
-      // 获取交易额度
-      logger.info(`第一步：${clc.blueBright(testTrade.a.pair)}`);
-      testTrade.a.timecost = '';
-      logger.info(`限价：${testTrade.a.price}, 数量：${testTrade.a.amount}, 方向：${testTrade.a.side}`);
-      const order = <types.IOrder>{
-        symbol: testTrade.a.pair,
-        side: testTrade.a.side.toLowerCase(),
-        type: 'limit',
-        price: testTrade.a.price,
-        amount: testTrade.a.amount,
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
+      // 已下单时跳过
+      if (!testTrade.a.orderId) {
+        // 获取交易额度
+        logger.info(`第一步：${clc.blueBright(testTrade.a.pair)}`);
+        testTrade.a.timecost = '';
+        logger.info(`限价：${testTrade.a.price}, 数量：${testTrade.a.amount}, 方向：${testTrade.a.side}`);
+        const order = <types.IOrder>{
+          symbol: testTrade.a.pair,
+          side: testTrade.a.side.toLowerCase(),
+          type: 'limit',
+          price: testTrade.a.price,
+          amount: testTrade.a.amount,
+        };
+        const orderInfo = await this.createOrder(exchange, order);
+        if (!orderInfo) {
+          return;
+        }
+        logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
+
+        testTrade.a.status = orderInfo.status;
+        testTrade.a.orderId = orderInfo.id;
+
+        // 更新队列
+        await this.storage.updateTradingSession(testTrade, 0);
       }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
-
-      testTrade.a.status = orderInfo.status;
-      testTrade.a.orderId = orderInfo.id;
-
-      // 更新队列
-      await this.storage.updateTradingSession(testTrade, 0);
       const nextB = async () => {
         logger.info('执行nextB...');
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
+        const orderRes = await this.queryOrder(exchange, testTrade.a.orderId, testTrade.a.pair);
         if (!orderRes) {
           return false;
         }
@@ -77,33 +80,36 @@ export class Order extends ApiHandler {
   }
 
   async orderB(exchange: types.IExchange, trade: types.ITradeTriangle) {
-    logger.info(`第二步：${clc.blueBright(trade.b.pair)}`);
     try {
       const timer = Helper.getTimer();
       const tradeB = trade.b;
+      // 已下单时跳过
+      if (!tradeB.orderId) {
 
-      logger.info(`限价：${tradeB.price}, 数量：${tradeB.amount}, 方向：${tradeB.side}`);
-      const order = <types.IOrder>{
-        symbol: tradeB.pair,
-        side: tradeB.side.toLowerCase(),
-        type: 'limit',
-        price: tradeB.price,
-        amount: tradeB.amount,
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
+        logger.info(`第二步：${clc.blueBright(trade.b.pair)}`);
+        logger.info(`限价：${tradeB.price}, 数量：${tradeB.amount}, 方向：${tradeB.side}`);
+        const order = <types.IOrder>{
+          symbol: tradeB.pair,
+          side: tradeB.side.toLowerCase(),
+          type: 'limit',
+          price: tradeB.price,
+          amount: tradeB.amount,
+        };
+        const orderInfo = await this.createOrder(exchange, order);
+        if (!orderInfo) {
+          return;
+        }
+        logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
+
+        trade.b.status = <any>orderInfo.status;
+        trade.b.orderId = orderInfo.id;
+        // 更新队列
+        await this.storage.updateTradingSession(trade, 1);
       }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
-
-      trade.b.status = <any>orderInfo.status;
-      trade.b.orderId = orderInfo.id;
-      // 更新队列
-      await this.storage.updateTradingSession(trade, 1);
       const nextC = async () => {
         logger.info('执行nextC...');
 
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
+        const orderRes = await this.queryOrder(exchange, tradeB.orderId, tradeB.pair);
         if (!orderRes) {
           return false;
         }
@@ -138,31 +144,37 @@ export class Order extends ApiHandler {
   }
 
   async orderC(exchange: types.IExchange, trade: types.ITradeTriangle) {
-    logger.info(`第三步：${clc.blueBright(trade.c.pair)}`);
     try {
       const timer = Helper.getTimer();
       const tradeC = trade.c;
-      logger.info(`限价：${tradeC.price}, 数量：${tradeC.amount}, 方向：${tradeC.side}`);
-      const order = <types.IOrder>{
-        symbol: tradeC.pair,
-        side: tradeC.side.toLowerCase(),
-        type: 'limit',
-        price: tradeC.price,
-        amount: tradeC.amount,
-      };
-      const orderInfo = await this.createOrder(exchange, order);
-      if (!orderInfo) {
-        return;
-      }
-      logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
+      // 已下单时跳过
+      if (!tradeC.orderId) {
+        logger.info(`第三步：${clc.blueBright(trade.c.pair)}`);
+        logger.info(`限价：${tradeC.price}, 数量：${tradeC.amount}, 方向：${tradeC.side}`);
+        if (tradeC.side.toLowerCase() === 'sell' && tradeC.amount > trade.b.amount) {
+          tradeC.amount = trade.b.amount;
+        }
+        const order = <types.IOrder>{
+          symbol: tradeC.pair,
+          side: tradeC.side.toLowerCase(),
+          type: 'limit',
+          price: tradeC.price,
+          amount: tradeC.amount,
+        };
+        const orderInfo = await this.createOrder(exchange, order);
+        if (!orderInfo) {
+          return;
+        }
+        logger.debug(`下单返回值: ${JSON.stringify(orderInfo, null, 2)}`);
 
-      trade.c.status = orderInfo.status;
-      trade.c.orderId = orderInfo.id;
-      // 更新队列
-      await this.storage.updateTradingSession(trade, 2);
+        trade.c.status = orderInfo.status;
+        trade.c.orderId = orderInfo.id;
+        // 更新队列
+        await this.storage.updateTradingSession(trade, 2);
+      }
       const completedC = async () => {
         logger.info('completedC...');
-        const orderRes = await this.queryOrder(exchange, orderInfo.id, orderInfo.symbol);
+        const orderRes = await this.queryOrder(exchange, tradeC.orderId, tradeC.pair);
         if (!orderRes) {
           return false;
         }

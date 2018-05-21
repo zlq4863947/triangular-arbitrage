@@ -40,6 +40,10 @@ npm run ws
 ## 系统构成图
 <p align="center"><img src="assets/diagram.png"></p>
 
+## 概念图
+<p align="center"><img src="assets/ta-chart.png"></p>
+<p align="center"><img src="assets/a-b-c.png"></p>
+
 ## 交易程序交流 QQ 群
 310298370
 
