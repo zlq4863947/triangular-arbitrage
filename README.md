@@ -40,6 +40,11 @@ npm run ws
 ## 系统构成图
 <p align="center"><img src="assets/diagram.png"></p>
 
+## 概念图
+<p align="center"><img src="assets/ta-chart.png"></p>
+<p align="center"><img src="assets/a-b-c.png"></p>
+
+
 ## 疑难解答
 
 Q：toml配置如何改为json配置?
