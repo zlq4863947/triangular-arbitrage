@@ -29,9 +29,12 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\start.js",
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "args": [
+        "${workspaceFolder}\\src\\lib\\bin\\start.ts"
       ]
     },
     {
