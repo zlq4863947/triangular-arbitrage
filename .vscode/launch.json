@@ -29,16 +29,19 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\start.js",
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "args": [
+        "${workspaceFolder}//src//lib//bin//start.ts"
       ]
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Launch WS",
-      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\ws.js",
+      "program": "${workspaceFolder}//dist//src//lib//bin//ws.js",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]
@@ -47,7 +50,7 @@
       "type": "node",
       "request": "launch",
       "name": "launode",
-      "program": "${workspaceFolder}\\dist\\test\\serv.js",
+      "program": "${workspaceFolder}//dist//test//serv.js",
       "outFiles": [
         "${workspaceFolder}/dist/test/**/*.js"
       ]
