@@ -17,6 +17,10 @@ npm install
 npm start
 ```
 
+## 控制台运行效果
+<p align="center"><img src="assets/running-result.png"></p>
+
+
 ## web服务启动步骤
 
 非必须启动项，只对想看的排行页面的同学需要如下配置
