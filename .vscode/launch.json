@@ -29,7 +29,7 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}\\dist\\src\\lib\\bin\\start.js",
+      "program": "${workspaceFolder}//dist//src//lib//bin//start.js",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]
