@@ -48,9 +48,6 @@ npm run ws
 <p align="center"><img src="assets/ta-chart.png"></p>
 <p align="center"><img src="assets/a-b-c.png"></p>
 
-## 交易程序交流 QQ 群
-310298370
-
 ## 疑难解答
 
 Q：toml配置如何改为json配置?
