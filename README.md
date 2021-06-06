@@ -1,6 +1,12 @@
 # triangular-arbitrage
 数字货币-三角套利机器人
 
+## 重要(important)
+
+成程序已经很长时间不维护，且今后也将不在维护。新程序请点击[此链接](https://github.com/zlq4863947/triangular-arbitrage2)
+
+This program has not been maintained for a long time, and will not be maintained in the future.
+Click [this link](https://github.com/zlq4863947/triangular-arbitrage2) for the new program
 
 ## 配置
 1、config/default.org.toml 改为 config/default.toml
